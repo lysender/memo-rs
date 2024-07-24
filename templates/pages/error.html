@@ -1,0 +1,14 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <section class="hero is-danger">
+            <div class="hero-body">
+                <p class="title">{{ error.message }}</p>
+                <p class="subtitle">{{ error.description }}</p>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

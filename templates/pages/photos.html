@@ -1,0 +1,47 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <nav class="breadcrumb" aria-label="breadcrumbs">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li class="is-active">
+                    <a href="/albums/{{ album.id }}" aria-current="page">
+                        <span id="breadcrumb-album-label">{{ album.label }}</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <h1 class="title" id="album-title">
+            {{ album.label }}
+        </h1>
+
+        <div class="columns">
+            <div class="column is-half">
+                <div id="edit-photos-container">
+                    {% include "widgets/edit_photos_controls.html" %}
+                </div>
+            </div>
+            <div class="column is-half">
+                <div id="edit-album-container">
+                    {% include "widgets/edit_album_controls.html" %}
+                </div>
+            </div>
+        </div>
+
+        <div class="photo-gallery-container mt-5">
+            <div
+                id="photo-gallery"
+                hx-get="/albums/{{ album.id }}/photo-grid?page=1"
+                hx-trigger="load"
+                class="photo-grid">
+                <span class="xhtmx-indicator my-indicator">
+                    <img src="/assets/images/svg-loaders/tail-spin.svg" width="32" />
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,12 @@
+<div class="photo-pre-delete is-flex is-justify-content-end">
+    <button
+        class="button is-small"
+        hx-get="/albums/{{ photo.dir_id }}/photos/{{ photo.id }}/delete"
+        hx-target="closest .photo-item-controls"
+        hx-swap="innerHTML"
+    >
+        <span class="icon is-small">
+            <i class="fas fa-trash"></i>
+        </span>
+    </button>
+</div>

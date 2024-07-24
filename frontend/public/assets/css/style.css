@@ -1,0 +1,59 @@
+/** Login Page **/
+.login-form {
+  width: 600px;
+}
+
+/** Photo gallery **/
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(150px,1fr));
+  gap: 15px;
+}
+.photo-grid .photo-grid-item {
+  width: 150px;
+}
+.photo-grid .photo-item {
+  height: 125px;
+}
+.photo-item a {
+  display: block;
+}
+.photo-grid .photo-item img {
+  display: block;
+  height: 125px;
+  object-fit: cover;
+  width: 100%;
+  max-width: 100%;
+}
+.photo-grid .photo-item-controls,
+.photo-grid .photo-caption {
+  display: none;
+}
+.photo-grid.photo-grid-edit .photo-item-controls,
+.photo-grid.photo-grid-edit .photo-caption {
+  display: block;
+}
+.photo-caption {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#photos-count-w {
+  line-height: 40px;
+}
+
+/** Photo upload **/
+.progress-hidden {
+  display: none;
+}
+
+/** Generic HTMX indicators **/
+.htmx-indicator{
+  display:none;
+}
+.htmx-request .my-indicator {
+  display:inline;
+}
+.htmx-request.my-indicator {
+  display:inline;
+}

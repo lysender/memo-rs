@@ -1,0 +1,55 @@
+use askama::Template;
+use axum::{
+    body::Body,
+    extract::{Query, State},
+    response::Response,
+    Extension,
+};
+
+use crate::run::AppState;
+use crate::{
+    ctx::Ctx,
+    models::{ListAlbumsParams, TemplateData},
+};
+
+use super::{enforce_policy, handle_error, Action, Resource};
+
+#[derive(Template)]
+#[template(path = "pages/index.html")]
+struct IndexTemplate {
+    t: TemplateData,
+    query_params: String,
+}
+
+pub async fn index_handler(
+    Extension(ctx): Extension<Ctx>,
+    State(state): State<AppState>,
+    Query(query): Query<ListAlbumsParams>,
+) -> Response<Body> {
+    let actor = ctx.actor();
+
+    if let Err(err) = enforce_policy(actor, Resource::Album, Action::Read) {
+        return handle_error(&state, Some(actor.clone()), err.into(), true);
+    }
+
+    let mut t = TemplateData::new(&state, Some(actor.clone()));
+    t.title = String::from("Home");
+
+    let tpl = IndexTemplate {
+        t,
+        query_params: query.to_string(),
+    };
+
+    // Prevent caching the home page
+    Response::builder()
+        .status(200)
+        .header("Surrogate-Control", "no-store")
+        .header(
+            "Cache-Control",
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+        )
+        .header("Pragma", "no-cache")
+        .header("Expires", 0)
+        .body(Body::from(tpl.render().unwrap()))
+        .unwrap()
+}

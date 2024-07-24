@@ -1,0 +1,44 @@
+<form class="box" hx-post="/login" hx-target="this" hx-swap="outerHTML">
+    {% match error_message %}
+        {% when Some with (msg) %}
+            <div class="error-message mb-5 tag is-danger">
+                <p>{{ msg }}</p>
+            </div>
+        {% when None %}
+    {% endmatch %}
+
+    <div class="field">
+        <label class="label">Username</label>
+        <div class="control has-icons-left has-icons-right">
+            <input class="input" name="username" required type="text" placeholder="Username" value="">
+            <span class="icon is-small is-left">
+            <i class="fas fa-user"></i>
+        </span>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="label">Password</label>
+        <div class="control has-icons-left has-icons-right">
+            <input class="input" name="password" required type="password" placeholder="Password" value="">
+            <span class="icon is-small is-left">
+            <i class="fas fa-lock"></i>
+        </span>
+        </div>
+    </div>
+
+    <div class="field">
+        <div id="g-recaptcha" class="g-recaptcha" data-sitekey="{{ captcha_key }}"></div>
+    </div>
+
+    <div class="field is-grouped">
+        <div class="control">
+            <button type="submit" class="button is-link">
+                <span style="margin-right: 5px" class="htmx-indicator my-indicator">
+                    <img src="/assets/images/svg-loaders/three-dots.svg" width="20" />
+                </span>
+                Login
+            </button>
+        </div>
+    </div>
+</form>

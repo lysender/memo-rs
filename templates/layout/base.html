@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Memories - {{+ t.title }}</title>
+
+    <link rel="stylesheet" href="/assets/vendors/fontawesome-free/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="/assets/vendors/bulma/1.0.1/css/bulma.min.css" />
+    <link rel="stylesheet" href="{{ t.assets.main_css }}">
+
+    {% for style in t.styles %}
+    <link rel="stylesheet" href="{{ style }}" />
+    {% endfor %}
+</head>
+<body>
+    {% include "layout/nav.html" %}
+
+    {% block content %}
+    {% endblock %}
+
+    {% include "layout/footer.html" %}
+
+    <script src="{{ t.assets.vendor_js }}"></script>
+    <script src="{{ t.assets.main_js }}"></script>
+
+    {% for script in t.scripts %}
+    <script src="{{ script }}?v={{ t.version }}"></script>
+    {% endfor %}
+
+    {% for script in t.async_scripts %}
+    <script async src="{{ script }}"></script>
+    {% endfor %}
+</body>
+</html>

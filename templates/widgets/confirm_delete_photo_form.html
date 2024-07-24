@@ -1,0 +1,32 @@
+<form
+    method="post"
+    action="/albums/{{ photo.dir_id }}/photos/{{ photo.id }}/delete"
+    hx-post="/albums/{{ photo.dir_id }}/photos/{{ photo.id }}/delete"
+    hx-target="closest .photo-grid-item"
+    hx-swap="outerHTML"
+>
+    {% match error_message %}
+        {% when Some with (msg) %}
+            <p class="has-text-danger">{{ msg }}</p>
+        {% when None %}
+    {% endmatch %}
+
+    <div class="photo-confirm-delete is-flex is-justify-content-end">
+        <input type="hidden" name="token" value="{{ payload.token }}" />
+        <button
+            class="button is-small mr-2"
+            hx-get="/albums/{{ photo.dir_id }}/photos/{{ photo.id }}/delete-controls"
+            hx-target="closest .photo-item-controls"
+            hx-swap="innnerHTML"
+        >
+            <span class="icon is-small">
+                <i class="fas fa-arrow-left"></i>
+            </span>
+        </button>
+        <button class="button is-small is-danger">
+            <span class="icon is-small">
+                <i class="fas fa-trash"></i>
+            </span>
+        </button>
+    </div>
+</form>

@@ -1,0 +1,31 @@
+<div class="is-flex is-justify-content-end">
+    {% if can_edit %}
+    <button
+        class="button mr-2"
+        hx-get="/albums/{{ album.id }}/edit"
+        hx-target="#edit-album-container"
+    >
+        Edit Label
+    </button>
+    {% endif %}
+
+    {% if can_delete %}
+    <button
+        class="button"
+        hx-get="/albums/{{ album.id }}/delete"
+        hx-target="#edit-album-container"
+    >
+        <span class="icon is-small">
+            <i class="fas fa-trash"></i>
+        </span>
+        <span>Delete Album</span>
+    </button>
+    {% endif %}
+</div>
+
+{% if updated %}
+<span id="breadcrumb-album-label" hx-swap-oob="true">{{ album.label }}</span>
+<h1 class="title" id="album-title" hx-swap-oob="true">
+    {{ album.label }}
+</h1>
+{% endif %}
