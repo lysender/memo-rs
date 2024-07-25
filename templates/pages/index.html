@@ -32,9 +32,9 @@
                 </div>
 
                 <div class="album-items" hx-get="/albums/listing?{{ query_params }}" hx-trigger="load">
-                    <span class="xhtmx-indicator my-indicator">
-                        <img src="/assets/images/svg-loaders/tail-spin.svg" width="32" />
-                    </span>
+                    <div>
+                        <progress class="progress is-small" max="100"></progress>
+                    </div>
                 </div>
             </nav>
         </div>

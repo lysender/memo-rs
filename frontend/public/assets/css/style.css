@@ -48,12 +48,12 @@
 }
 
 /** Generic HTMX indicators **/
-.htmx-indicator{
-  display:none;
+.htmx-indicator {
+  display: none;
 }
 .htmx-request .my-indicator {
-  display:inline;
+  display: inline;
 }
-.htmx-request.my-indicator {
-  display:inline;
+.htmx-request .block-loading {
+  display: block;
 }

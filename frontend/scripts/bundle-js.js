@@ -27,7 +27,7 @@ if (!suffix) {
 const bundles = [
   {
     bundle: `assets/bundles/js/vendor-${suffix}.js`,
-    files: ['assets/vendors/htmx/2.0/js/htmx.min.js'],
+    files: ['assets/vendors/htmx/2.0.1/js/htmx.min.js'],
   },
   {
     bundle: `assets/bundles/js/gallery-${suffix}.js`,
