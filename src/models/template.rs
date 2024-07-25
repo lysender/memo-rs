@@ -4,7 +4,6 @@ use super::Actor;
 
 #[derive(Clone)]
 pub struct TemplateData {
-    pub version: String,
     pub title: String,
     pub assets: AssetManifest,
     pub styles: Vec<String>,
@@ -16,11 +15,9 @@ pub struct TemplateData {
 impl TemplateData {
     pub fn new(state: &AppState, actor: Option<Actor>) -> TemplateData {
         let config = state.config.clone();
-        let version = config.version.clone();
         let assets = config.assets.clone();
 
         TemplateData {
-            version,
             title: String::from(""),
             assets,
             styles: Vec::new(),

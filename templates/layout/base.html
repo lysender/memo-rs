@@ -25,7 +25,7 @@
     <script src="{{ t.assets.main_js }}"></script>
 
     {% for script in t.scripts %}
-    <script src="{{ script }}?v={{ t.version }}"></script>
+    <script src="{{ script }}"></script>
     {% endfor %}
 
     {% for script in t.async_scripts %}

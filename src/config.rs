@@ -15,7 +15,6 @@ pub const CLIENT_ID: &str = "CLIENT_ID";
 pub const BUCKET_ID: &str = "BUCKET_ID";
 pub const API_URL: &str = "API_URL";
 pub const JWT_SECRET: &str = "JWT_SECRET";
-pub const VERSION: &str = "VERSION";
 
 #[derive(Clone, Deserialize)]
 pub struct Config {
@@ -28,7 +27,6 @@ pub struct Config {
     pub bucket_id: String,
     pub api_url: String,
     pub jwt_secret: String,
-    pub version: String,
     pub assets: AssetManifest,
 }
 
@@ -65,7 +63,6 @@ impl Config {
         let bucket_id: String = env::var(BUCKET_ID).expect("BUCKET_ID is not set");
         let api_url: String = env::var(API_URL).expect("API_URL is not set");
         let jwt_secret: String = env::var(JWT_SECRET).expect("JWT_SECRET is not set");
-        let version: String = env::var(VERSION).expect("VERSION is not set");
 
         if !frontend_dir.exists() {
             return Err("Frontend dir does not exists.".into());
@@ -83,7 +80,6 @@ impl Config {
             bucket_id,
             api_url,
             jwt_secret,
-            version,
             assets,
         })
     }

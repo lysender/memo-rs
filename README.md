@@ -16,7 +16,6 @@ JWT_SECRET=secret
 CLIENT_ID=value
 BUCKET_ID=value
 API_URL=http://localhost:11001
-VERSION=0.0.1
 ```
 
 ## Build
@@ -79,7 +78,6 @@ Environment="JWT_SECRET=secret"
 Environment="CLIENT_ID=value"
 Environment="BUCKET_ID=value"
 Environment="API_URL=http://localhost:11001"
-Environment="VERSION=0.0.1"
 
 WorkingDirectory=/data/www/html/sites/memo-rs/
 ExecStart=/data/www/html/sites/memo-rs/target/release/memo-rs
