@@ -56,13 +56,13 @@
     {% when Some with (page_meta) %}
         {% if page_meta.total_records > 0 %}
             {% if page_meta.page == page_meta.total_pages %}
-                <span id="photos-count-w" hx-swap-oob="true" class="ml-5">
+                <span id="photos-count-w" hx-swap-oob="true">
                     <span class="current-count">{{ page_meta.total_records }}</span>
                     of
                     <span class="total-records">{{ page_meta.total_records }}</span>
                 </span>
             {% else %}
-                <span id="photos-count-w" hx-swap-oob="true" class="ml-5">
+                <span id="photos-count-w" hx-swap-oob="true">
                     <span class="current-count">{{ page_meta.page * page_meta.per_page }}</span>
                     of
                     <span class="total-records">{{ page_meta.total_records }}</span>

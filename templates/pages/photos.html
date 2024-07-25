@@ -18,20 +18,15 @@
             {{ album.label }}
         </h1>
 
-        <div class="columns">
-            <div class="column is-half">
-                <div id="edit-photos-container">
-                    {% include "widgets/edit_photos_controls.html" %}
-                </div>
-            </div>
-            <div class="column is-half">
-                <div id="edit-album-container">
-                    {% include "widgets/edit_album_controls.html" %}
-                </div>
-            </div>
+        <div id="edit-album-container">
+            {% include "widgets/edit_album_controls.html" %}
         </div>
 
-        <div class="photo-gallery-container mt-5">
+        <div class="has-text-right is-size-7">
+            <span id="photos-count-w">&nbsp;</span>
+        </div>
+
+        <div class="photo-gallery-container">
             <div
                 id="photo-gallery"
                 hx-get="/albums/{{ album.id }}/photo-grid?page=1"
