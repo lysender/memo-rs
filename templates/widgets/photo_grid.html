@@ -8,7 +8,7 @@
 
 {% for photo in photos %}
 <div
-    class="photo-grid-item"
+    class="photo-grid-item has-background-light"
 {% if photo.id == last_item %}
     {% match next_page %}
         {% when Some with (page) %}

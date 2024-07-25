@@ -32,15 +32,16 @@
         </div>
 
         <div class="photo-gallery-container mt-5">
+            <div id="gallery-loading" class="htmx-indicator block-loading">
+                <progress class="progress is-small" max="100"></progress>
+            </div>
             <div
                 id="photo-gallery"
                 hx-get="/albums/{{ album.id }}/photo-grid?page=1"
                 hx-trigger="load"
-                class="photo-grid">
-                <span class="xhtmx-indicator my-indicator">
-                    <img src="/assets/images/svg-loaders/tail-spin.svg" width="32" />
-                </span>
-            </div>
+                class="photo-grid"
+                hx-indicator="#gallery-loading"
+            ></div>
         </div>
     </div>
 </section>

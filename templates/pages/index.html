@@ -32,7 +32,7 @@
                 </div>
 
                 <div class="album-items" hx-get="/albums/listing?{{ query_params }}" hx-trigger="load">
-                    <div>
+                    <div class="htmx-indicator block-loading">
                         <progress class="progress is-small" max="100"></progress>
                     </div>
                 </div>

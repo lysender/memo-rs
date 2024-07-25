@@ -51,9 +51,13 @@
 .htmx-indicator {
   display: none;
 }
-.htmx-request .my-indicator {
+.htmx-request.my-indicator {
   display: inline;
 }
-.htmx-request .block-loading {
+.htmx-request.block-loading {
   display: block;
+}
+
+.block-loading .progress:indeterminate {
+  animation-duration: 0.8s;
 }
