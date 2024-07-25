@@ -32,16 +32,31 @@
         </div>
 
         <div class="photo-gallery-container mt-5">
-            <div id="gallery-loading" class="htmx-indicator block-loading">
-                <progress class="progress is-small" max="100"></progress>
-            </div>
             <div
                 id="photo-gallery"
                 hx-get="/albums/{{ album.id }}/photo-grid?page=1"
                 hx-trigger="load"
                 class="photo-grid"
-                hx-indicator="#gallery-loading"
-            ></div>
+            >
+                <div class="photo-grid-item has-background-light skeleton-block">
+                    <div class="photo-item">&nbsp;</div>
+                </div>
+                <div class="photo-grid-item has-background-light skeleton-block">
+                    <div class="photo-item">&nbsp;</div>
+                </div>
+                <div class="photo-grid-item has-background-light skeleton-block">
+                    <div class="photo-item">&nbsp;</div>
+                </div>
+                <div class="photo-grid-item has-background-light skeleton-block">
+                    <div class="photo-item">&nbsp;</div>
+                </div>
+                <div class="photo-grid-item has-background-light skeleton-block">
+                    <div class="photo-item">&nbsp;</div>
+                </div>
+                <div class="photo-grid-item has-background-light skeleton-block">
+                    <div class="photo-item">&nbsp;</div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
