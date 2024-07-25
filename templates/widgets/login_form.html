@@ -1,4 +1,10 @@
-<form class="box" hx-post="/login" hx-target="this" hx-swap="outerHTML">
+<form
+    id="login-form"
+    class="box"
+    hx-post="/login"
+    hx-target="this"
+    hx-swap="outerHTML"
+>
     {% match error_message %}
         {% when Some with (msg) %}
             <div class="error-message mb-5 tag is-danger">
@@ -33,10 +39,7 @@
 
     <div class="field is-grouped">
         <div class="control">
-            <button type="submit" class="button is-link">
-                <span style="margin-right: 5px" class="htmx-indicator my-indicator">
-                    <img src="/assets/images/svg-loaders/three-dots.svg" width="20" />
-                </span>
+            <button id="btn-login" type="submit" class="button is-link">
                 Login
             </button>
         </div>
