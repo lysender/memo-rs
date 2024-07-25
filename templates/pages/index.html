@@ -31,10 +31,17 @@
                     </p>
                 </div>
 
-                <div class="album-items" hx-get="/albums/listing?{{ query_params }}" hx-trigger="load">
-                    <div class="htmx-indicator block-loading">
-                        <progress class="progress is-small" max="100"></progress>
-                    </div>
+                <div
+                    class="album-items"
+                    hx-get="/albums/listing?{{ query_params }}"
+                    hx-trigger="load"
+                >
+                    <span class="panel-block is-skeleton">&nbsp;</span>
+                    <span class="panel-block is-skeleton">&nbsp;</span>
+                    <span class="panel-block is-skeleton">&nbsp;</span>
+                    <span class="panel-block is-skeleton">&nbsp;</span>
+                    <span class="panel-block is-skeleton">&nbsp;</span>
+                    <span class="panel-block is-skeleton">&nbsp;</span>
                 </div>
             </nav>
         </div>
