@@ -16,7 +16,7 @@ if (!window.X_GALLERY_EVENTS) {
   });
 
   document.addEventListener('click', (e) => {
-    if (e.target.closest('#btn-edit-photos')) {
+    if (e.target.closest('#menu-edit-photos')) {
       handleToggleMenu();
     }
   });
@@ -43,9 +43,15 @@ function handleToggleMenu() {
     container.classList.toggle('photo-grid-edit');
   }
 
-  const btn = document.getElementById('btn-edit-photos');
+  const menu = document.getElementById('menu-edit-photos');
+  if (menu) {
+    menu.classList.toggle('is-active');
+  }
+
+  // Also toggle the trigger button color
+  const btn = document.getElementById('btn-album-menu-trigger');
   if (btn) {
-    btn.classList.toggle('is-active');
+    btn.classList.toggle('is-info');
   }
 }
 
