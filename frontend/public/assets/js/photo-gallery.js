@@ -21,7 +21,20 @@ if (!window.X_GALLERY_EVENTS) {
     }
   });
 
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-album-menu')) {
+      handleToggleAlbumMenu();
+    }
+  });
+
   htmx.on('PhotoDeletedEvent', handlePhotoDeleted);
+}
+
+function handleToggleAlbumMenu() {
+  const container = document.getElementById('btn-album-menu');
+  if (container) {
+    container.classList.toggle('is-active');
+  }
 }
 
 function handleToggleMenu() {

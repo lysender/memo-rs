@@ -1,27 +1,55 @@
-<div class="is-flex is-justify-content-end">
-    {% if can_edit %}
-    <button
-        class="button mr-2"
-        hx-get="/albums/{{ album.id }}/edit"
-        hx-target="#edit-album-container"
-    >
-        Edit Label
-    </button>
-    {% endif %}
+{% if can_edit || can_delete || can_delete_photos %}
+<div class="dropdown is-right" id="btn-album-menu">
+    <div class="dropdown-trigger">
+        <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+            <span class="icon is-small">
+                <i class="fas fa-cog" aria-hidden="true"></i>
+            </span>
+        </button>
+    </div>
+    <div class="dropdown-menu" id="dropdown-menu" role="menu">
+        <div class="dropdown-content">
+            {% if can_delete_photos %}
+            <a href="#" class="dropdown-item">
+                <span class="icon is-small">
+                    <i class="fas fa-list" aria-hidden="true"></i>
+                </span>
+                Edit Photos
+            </a>
+            {% endif %}
 
-    {% if can_delete %}
-    <button
-        class="button"
-        hx-get="/albums/{{ album.id }}/delete"
-        hx-target="#edit-album-container"
-    >
-        <span class="icon is-small">
-            <i class="fas fa-trash"></i>
-        </span>
-        <span>Delete Album</span>
-    </button>
-    {% endif %}
+            {% if can_edit %}
+            <a
+                class="dropdown-item"
+                href="#"
+                hx-get="/albums/{{ album.id }}/edit"
+                hx-target="#edit-album-container"
+            >
+                <span class="icon is-small">
+                    <i class="fas fa-pen" aria-hidden="true"></i>
+                </span>
+                Edit Label
+            </a>
+            {% endif %}
+
+            {% if can_delete %}
+            <hr class="dropdown-divider" />
+            <a
+                href="#"
+                class="dropdown-item has-text-danger"
+                hx-get="/albums/{{ album.id }}/delete"
+                hx-target="#edit-album-container"
+            >
+                <span class="icon is-small">
+                    <i class="fas fa-trash" aria-hidden="true"></i>
+                </span>
+                Delete Album
+            </a>
+            {% endif %}
+        </div>
+    </div>
 </div>
+{% endif %}
 
 {% if updated %}
 <span id="breadcrumb-album-label" hx-swap-oob="true">{{ album.label }}</span>

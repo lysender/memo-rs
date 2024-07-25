@@ -8,7 +8,7 @@
 
 {% for photo in photos %}
 <div
-    class="photo-grid-item has-background-light"
+    class="photo-grid-item"
 {% if photo.id == last_item %}
     {% match next_page %}
         {% when Some with (page) %}
@@ -33,7 +33,7 @@
             </button>
         </div>
     </div>
-    <div class="photo-item">
+    <div class="photo-item has-background-light">
         <a
             href="{{ photo.orig.url }}"
             data-pswp-width="{{ photo.preview.dimension.width }}"

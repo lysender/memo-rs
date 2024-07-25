@@ -24,6 +24,7 @@ struct EditAlbumControlsTemplate {
     updated: bool,
     can_edit: bool,
     can_delete: bool,
+    can_delete_photos: bool,
 }
 
 /// Simply re-renders the edit and delete album controls
@@ -36,6 +37,7 @@ pub async fn edit_album_controls_handler(
         updated: false,
         can_edit: enforce_policy(ctx.actor(), Resource::Album, Action::Update).is_ok(),
         can_delete: enforce_policy(ctx.actor(), Resource::Album, Action::Delete).is_ok(),
+        can_delete_photos: enforce_policy(ctx.actor(), Resource::Photo, Action::Delete).is_ok(),
     };
 
     Response::builder()
@@ -145,6 +147,7 @@ pub async fn post_edit_album_handler(
             updated: true,
             can_edit: enforce_policy(actor, Resource::Album, Action::Update).is_ok(),
             can_delete: enforce_policy(actor, Resource::Album, Action::Delete).is_ok(),
+            can_delete_photos: enforce_policy(actor, Resource::Photo, Action::Delete).is_ok(),
         };
         Response::builder()
             .status(status)
