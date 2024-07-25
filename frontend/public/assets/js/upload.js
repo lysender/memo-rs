@@ -30,10 +30,10 @@ function handleFilesSelect(e) {
   }
 }
 
-function hideSpinner() {
-  const spinner = document.getElementById('progress-spinner');
-  if (spinner) {
-    spinner.classList.add('is-hidden');
+function showUploadFinished() {
+  const elem = document.getElementById('h-uploading-photos');
+  if (elem) {
+    elem.innerHTML = 'Upload finished';
   }
 }
 
@@ -53,11 +53,11 @@ function createDomElement(html) {
 function startUploadPhotos() {
   uploadPhotos()
     .then(() => {
-      hideSpinner();
+      showUploadFinished();
       showUploadMore();
     })
     .catch((_err) => {
-      hideSpinner();
+      showUploadFinished();
       showUploadMore();
     });
 }
