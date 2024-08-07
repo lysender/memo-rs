@@ -11,6 +11,7 @@ use crate::{
     run::AppState,
     services::get_album,
     web::{enforce_policy, handle_error, Action, Resource},
+    Error,
 };
 
 pub async fn album_listing_middleware(
@@ -40,14 +41,19 @@ pub async fn album_middleware(
         return handle_error(&state, Some(ctx.actor().clone()), err.into(), full_page);
     }
 
+    let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
+    let Some(bucket_id) = default_bucket_id else {
+        return handle_error(
+            &state,
+            Some(ctx.actor().clone()),
+            Error::NoDefaultBucket.into(),
+            full_page,
+        );
+    };
+
     let album_id = params.album_id.expect("album_id is required");
-    let result = get_album(
-        &state.config.api_url,
-        ctx.token(),
-        &state.config.bucket_id,
-        &album_id,
-    )
-    .await;
+    let result = get_album(&state.config.api_url, ctx.token(), &bucket_id, &album_id).await;
 
     match result {
         Ok(album) => {

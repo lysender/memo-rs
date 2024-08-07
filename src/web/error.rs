@@ -98,6 +98,12 @@ impl From<Error> for ErrorInfo {
                 message: msg.clone(),
                 description: msg,
             },
+            Error::NoDefaultBucket => Self {
+                status_code: StatusCode::INTERNAL_SERVER_ERROR,
+                title: "Internal Server Error".to_string(),
+                message: "No default bucket".to_string(),
+                description: "No default bucket configured".to_string(),
+            },
             Error::AlbumNotFound => Self {
                 status_code: StatusCode::NOT_FOUND,
                 title: "Not Found".to_string(),

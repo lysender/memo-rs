@@ -15,6 +15,7 @@ pub struct User {
 pub struct Actor {
     pub id: String,
     pub client_id: String,
+    pub default_bucket_id: Option<String>,
     pub scope: String,
     pub user: User,
     pub roles: Vec<Role>,

@@ -87,8 +87,17 @@ pub async fn post_edit_album_handler(
     payload: Option<Form<UpdateAlbumForm>>,
 ) -> Response<Body> {
     let config = state.config.clone();
-    let actor = ctx.actor();
     let album_id = album.id.clone();
+    let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
+    let Some(bucket_id) = default_bucket_id else {
+        return handle_error(
+            &state,
+            Some(actor.clone()),
+            Error::NoDefaultBucket.into(),
+            false,
+        );
+    };
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Update) {
         return handle_error(&state, Some(actor.clone()), err.into(), false);
@@ -113,8 +122,7 @@ pub async fn post_edit_album_handler(
         Some(form) => {
             tpl.payload.label = form.label.clone();
 
-            let result =
-                update_album(&config, ctx.token(), &config.bucket_id, &album_id, &form).await;
+            let result = update_album(&config, ctx.token(), &bucket_id, &album_id, &form).await;
             match result {
                 Ok(updated_album) => {
                     tpl.album = updated_album;

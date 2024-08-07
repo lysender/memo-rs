@@ -11,8 +11,6 @@ pub const SSL: &str = "SSL";
 pub const FRONTEND_DIR: &str = "FRONTEND_DIR";
 pub const CAPTCHA_SITE_KEY: &str = "CAPTCHA_SITE_KEY";
 pub const CAPTCHA_SITE_SECRET: &str = "CAPTCHA_SITE_SECRET";
-pub const CLIENT_ID: &str = "CLIENT_ID";
-pub const BUCKET_ID: &str = "BUCKET_ID";
 pub const API_URL: &str = "API_URL";
 pub const JWT_SECRET: &str = "JWT_SECRET";
 
@@ -23,8 +21,6 @@ pub struct Config {
     pub frontend_dir: PathBuf,
     pub captcha_site_key: String,
     pub captcha_site_secret: String,
-    pub client_id: String,
-    pub bucket_id: String,
     pub api_url: String,
     pub jwt_secret: String,
     pub assets: AssetManifest,
@@ -59,8 +55,6 @@ impl Config {
             env::var(CAPTCHA_SITE_KEY).expect("CAPTCHA_SITE_KEY is not set");
         let captcha_site_secret: String =
             env::var(CAPTCHA_SITE_SECRET).expect("CAPTCHA_SITE_SECRET is not set");
-        let client_id: String = env::var(CLIENT_ID).expect("CLIENT_ID is not set");
-        let bucket_id: String = env::var(BUCKET_ID).expect("BUCKET_ID is not set");
         let api_url: String = env::var(API_URL).expect("API_URL is not set");
         let jwt_secret: String = env::var(JWT_SECRET).expect("JWT_SECRET is not set");
 
@@ -76,8 +70,6 @@ impl Config {
             frontend_dir,
             captcha_site_key,
             captcha_site_secret,
-            client_id,
-            bucket_id,
             api_url,
             jwt_secret,
             assets,

@@ -72,15 +72,7 @@ pub async fn photo_listing_handler(
     Query(query): Query<ListPhotosParams>,
     State(state): State<AppState>,
 ) -> Response<Body> {
-    let config = state.config.clone();
-    let result = list_photos(
-        &config.api_url,
-        ctx.token(),
-        &config.bucket_id,
-        &album.id,
-        &query,
-    )
-    .await;
+    let album_id = album.id.clone();
 
     let mut tpl = PhotoGridTemnplate {
         album,
@@ -90,6 +82,15 @@ pub async fn photo_listing_handler(
         next_page: None,
         last_item: "".to_string(),
     };
+
+    let config = state.config.clone();
+    let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
+    let Some(bucket_id) = default_bucket_id else {
+        return build_error_response(tpl, Error::NoDefaultBucket);
+    };
+
+    let result = list_photos(&config.api_url, ctx.token(), &bucket_id, &album_id, &query).await;
 
     return match result {
         Ok(listing) => {

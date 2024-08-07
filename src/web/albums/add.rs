@@ -5,6 +5,7 @@ use axum::{body::Body, extract::State, response::Response, Extension, Form};
 use crate::models::NewAlbumForm;
 use crate::run::AppState;
 use crate::services::create_csrf_token;
+use crate::Error;
 use crate::{ctx::Ctx, models::TemplateData, services::create_album};
 
 use crate::web::{enforce_policy, handle_error, Action, ErrorInfo, Resource};
@@ -69,6 +70,15 @@ pub async fn post_new_album_handler(
 ) -> Response<Body> {
     let config = state.config.clone();
     let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
+    let Some(bucket_id) = default_bucket_id else {
+        return handle_error(
+            &state,
+            Some(actor.clone()),
+            Error::NoDefaultBucket.into(),
+            false,
+        );
+    };
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Create) {
         return handle_error(&state, Some(actor.clone()), err.into(), false);
@@ -98,7 +108,7 @@ pub async fn post_new_album_handler(
             token: form.token.clone(),
         };
 
-        let result = create_album(&config, ctx.token(), &config.bucket_id, album).await;
+        let result = create_album(&config, ctx.token(), &bucket_id, album).await;
 
         match result {
             Ok(album) => {

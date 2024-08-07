@@ -96,11 +96,10 @@ pub async fn post_login_handler(
 
     // Validate login information
     let auth_payload = AuthPayload {
-        client_id: &config.client_id,
-        username: &login_payload.username,
-        password: &login_payload.password,
+        username: login_payload.username,
+        password: login_payload.password,
     };
-    let login_result = authenticate(&config.api_url, &auth_payload).await;
+    let login_result = authenticate(&config.api_url, auth_payload).await;
     let auth = match login_result {
         Ok(val) => val,
         Err(err) => {

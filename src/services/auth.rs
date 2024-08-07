@@ -9,10 +9,9 @@ use crate::{
 };
 
 #[derive(Serialize)]
-pub struct AuthPayload<'a> {
-    pub client_id: &'a str,
-    pub username: &'a str,
-    pub password: &'a str,
+pub struct AuthPayload {
+    pub username: String,
+    pub password: String,
 }
 
 #[derive(Deserialize)]
@@ -21,9 +20,8 @@ pub struct AuthResponse {
     pub user: User,
 }
 
-pub async fn authenticate(api_url: &str, data: &AuthPayload<'_>) -> Result<AuthResponse> {
+pub async fn authenticate(api_url: &str, data: AuthPayload) -> Result<AuthResponse> {
     let mut body = HashMap::new();
-    body.insert("client_id", data.client_id);
     body.insert("username", data.username);
     body.insert("password", data.password);
 

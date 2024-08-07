@@ -13,8 +13,6 @@ FRONTEND_DIR=/path/to/frontend
 CAPTCHA_SITE_KEY=key
 CAPTCHA_SITE_SECRET=secret
 JWT_SECRET=secret
-CLIENT_ID=value
-BUCKET_ID=value
 API_URL=http://localhost:11001
 ```
 
@@ -75,8 +73,6 @@ Environment="FRONTEND_DIR=/data/www/html/sites/memo-rs/frontend"
 Environment="CAPTCHA_SITE_KEY=key"
 Environment="CAPTCHA_SITE_SECRET=secret"
 Environment="JWT_SECRET=secret"
-Environment="CLIENT_ID=value"
-Environment="BUCKET_ID=value"
 Environment="API_URL=http://localhost:11001"
 
 WorkingDirectory=/data/www/html/sites/memo-rs/

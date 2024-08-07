@@ -11,6 +11,7 @@ use crate::{
     run::AppState,
     services::get_photo,
     web::{enforce_policy, handle_error, Action, Resource},
+    Error,
 };
 
 pub async fn photo_middleware(
@@ -28,11 +29,22 @@ pub async fn photo_middleware(
     let album_id = params.album_id.expect("album_id is required");
     let photo_id = params.photo_id.expect("photo_id is required");
 
+    let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
+    let Some(bucket_id) = default_bucket_id else {
+        return handle_error(
+            &state,
+            Some(ctx.actor().clone()),
+            Error::NoDefaultBucket.into(),
+            full_page,
+        );
+    };
+
     let config = state.config.clone();
     let result = get_photo(
         &config.api_url,
         ctx.token(),
-        &config.bucket_id,
+        &bucket_id,
         &album_id,
         &photo_id,
     )

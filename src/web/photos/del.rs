@@ -85,6 +85,10 @@ pub async fn exec_delete_photo_handler(
 ) -> Response<Body> {
     let config = state.config.clone();
     let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
+    let Some(bucket_id) = default_bucket_id else {
+        return handle_error_message(Error::NoDefaultBucket);
+    };
 
     if let Err(err) = enforce_policy(actor, Resource::Photo, Action::Delete) {
         return handle_error_message(err);
@@ -103,7 +107,7 @@ pub async fn exec_delete_photo_handler(
         let result = delete_photo(
             &config,
             ctx.token(),
-            &config.bucket_id,
+            &bucket_id,
             &album.id,
             &photo.id,
             &form.token,

@@ -8,6 +8,7 @@ use crate::models::UploadParams;
 use crate::run::AppState;
 use crate::services::{create_csrf_token, upload_photo};
 use crate::web::{handle_error, handle_error_message, ErrorInfo};
+use crate::Error;
 use crate::{
     ctx::Ctx,
     models::{Album, Photo, TemplateData},
@@ -67,6 +68,17 @@ pub async fn upload_handler(
 ) -> Response<Body> {
     let config = state.config.clone();
     let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
+
+    let Some(bucket_id) = default_bucket_id else {
+        return handle_error(
+            &state,
+            Some(actor.clone()),
+            Error::NoDefaultBucket.into(),
+            false,
+        );
+    };
+
     let Ok(token) = create_csrf_token(&album.id, &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize upload photos form.".to_string());
         return handle_error(&state, Some(actor.clone()), error, true);
@@ -75,7 +87,7 @@ pub async fn upload_handler(
     let result = upload_photo(
         &config,
         ctx.token(),
-        &config.bucket_id,
+        &bucket_id,
         &album.id,
         &headers,
         query.token,

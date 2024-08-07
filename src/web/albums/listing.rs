@@ -32,6 +32,7 @@ pub async fn album_listing_handler(
 ) -> Response<Body> {
     let config = state.config.clone();
     let actor = ctx.actor();
+    let default_bucket_id = actor.default_bucket_id.clone();
 
     let mut tpl = AlbumsTemplate {
         error_message: None,
@@ -40,7 +41,11 @@ pub async fn album_listing_handler(
         can_create: enforce_policy(actor, Resource::Album, Action::Create).is_ok(),
     };
 
-    return match list_albums(&config.api_url, ctx.token(), &config.bucket_id, &query).await {
+    let Some(bucket_id) = default_bucket_id else {
+        return build_error_response(tpl, Error::NoDefaultBucket);
+    };
+
+    return match list_albums(&config.api_url, ctx.token(), &bucket_id, &query).await {
         Ok(albums) => {
             let mut keyword_param: String = "".to_string();
             if let Some(keyword) = &query.keyword {
