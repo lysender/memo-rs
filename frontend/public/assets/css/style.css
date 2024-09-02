@@ -1,3 +1,9 @@
+.main-w {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
 /** Login Page **/
 .login-form {
   width: 600px;
