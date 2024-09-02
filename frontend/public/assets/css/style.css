@@ -1,3 +1,9 @@
+.main-w {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
 /** Login Page **/
 .login-form {
   width: 600px;
@@ -10,7 +16,7 @@
   gap: 15px;
 }
 .photo-grid .photo-grid-item {
-  width: 150px;
+  /* width: 150px; */
 }
 .photo-grid .photo-grid-item.skeleton-block {
   margin-bottom: 0;

@@ -13,6 +13,7 @@ pub const CAPTCHA_SITE_KEY: &str = "CAPTCHA_SITE_KEY";
 pub const CAPTCHA_SITE_SECRET: &str = "CAPTCHA_SITE_SECRET";
 pub const API_URL: &str = "API_URL";
 pub const JWT_SECRET: &str = "JWT_SECRET";
+pub const GA_TAG_ID: &str = "GA_TAG_ID";
 
 #[derive(Clone, Deserialize)]
 pub struct Config {
@@ -23,6 +24,7 @@ pub struct Config {
     pub captcha_site_secret: String,
     pub api_url: String,
     pub jwt_secret: String,
+    pub ga_tag_id: Option<String>,
     pub assets: AssetManifest,
 }
 
@@ -57,6 +59,7 @@ impl Config {
             env::var(CAPTCHA_SITE_SECRET).expect("CAPTCHA_SITE_SECRET is not set");
         let api_url: String = env::var(API_URL).expect("API_URL is not set");
         let jwt_secret: String = env::var(JWT_SECRET).expect("JWT_SECRET is not set");
+        let ga_tag_id: Option<String> = env::var(GA_TAG_ID).ok();
 
         if !frontend_dir.exists() {
             return Err("Frontend dir does not exists.".into());
@@ -72,6 +75,7 @@ impl Config {
             captcha_site_secret,
             api_url,
             jwt_secret,
+            ga_tag_id,
             assets,
         })
     }
