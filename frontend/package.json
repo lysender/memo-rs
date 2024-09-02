@@ -16,12 +16,12 @@
   "license": "ISC",
   "dependencies": {
     "@biomejs/biome": "^1.8.3",
-    "@swc/cli": "^0.3.14",
+    "@swc/cli": "^0.4.0",
     "@swc/core": "^1.7.22",
     "lightningcss": "^1.26.0",
     "lightningcss-cli": "^1.26.0",
     "mkdirp": "^3.0.1",
-    "rimraf": "^5.0.7",
+    "rimraf": "^6.0.1",
     "uuid": "^10.0.0"
   }
 }
