@@ -16,7 +16,7 @@
   gap: 15px;
 }
 .photo-grid .photo-grid-item {
-  width: 150px;
+  /* width: 150px; */
 }
 .photo-grid .photo-grid-item.skeleton-block {
   margin-bottom: 0;
