@@ -1,6 +1,13 @@
 if (!window.X_LOGIN_EVENTS) {
   window.X_LOGIN_EVENTS = true;
 
+  function loginLoading() {
+    const btn = document.getElementById('btn-login');
+    if (btn) {
+      btn.classList.add('is-loading');
+    }
+  }
+
   htmx.onLoad(() => {
     renderRecaptcha();
   });
@@ -10,13 +17,6 @@ if (!window.X_LOGIN_EVENTS) {
       loginLoading();
     }
   });
-}
-
-function loginLoading() {
-  const btn = document.getElementById('btn-login');
-  if (btn) {
-    btn.classList.add('is-loading');
-  }
 }
 
 function onloadCallbackRecaptcha() {
