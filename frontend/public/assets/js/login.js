@@ -1,23 +1,25 @@
-if (!window.X_LOGIN_EVENTS) {
-  window.X_LOGIN_EVENTS = true;
+(function () {
+  if (!window.X_LOGIN_EVENTS) {
+    window.X_LOGIN_EVENTS = true;
 
-  function loginLoading() {
-    const btn = document.getElementById('btn-login');
-    if (btn) {
-      btn.classList.add('is-loading');
+    function loginLoading() {
+      const btn = document.getElementById('btn-login');
+      if (btn) {
+        btn.classList.add('is-loading');
+      }
     }
+
+    htmx.onLoad(() => {
+      renderRecaptcha();
+    });
+
+    document.addEventListener('submit', (e) => {
+      if (e.target.closest('#login-form')) {
+        loginLoading();
+      }
+    });
   }
-
-  htmx.onLoad(() => {
-    renderRecaptcha();
-  });
-
-  document.addEventListener('submit', (e) => {
-    if (e.target.closest('#login-form')) {
-      loginLoading();
-    }
-  });
-}
+})();
 
 function onloadCallbackRecaptcha() {
   renderRecaptcha();
