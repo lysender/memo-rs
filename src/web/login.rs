@@ -35,10 +35,8 @@ struct SubmitLoginData {
     captcha_key: String,
 }
 
-pub async fn login_handler(
-    Extension(pref): Extension<Pref>,
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn login_handler(State(state): State<AppState>) -> impl IntoResponse {
+    let pref = Pref::new();
     let actor: Option<Actor> = None;
     let mut t = TemplateData::new(&state, actor, &pref);
     t.title = String::from("Login");

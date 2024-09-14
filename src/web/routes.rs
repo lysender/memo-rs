@@ -15,7 +15,8 @@ use super::{
     album_listing_handler, album_listing_middleware, album_middleware,
     confirm_delete_photo_handler, delete_album_handler, edit_album_controls_handler,
     edit_album_handler, exec_delete_photo_handler, photo_middleware, post_edit_album_handler,
-    pre_delete_photo_handler, require_auth_middleware, upload_handler, upload_page_handler,
+    pre_delete_photo_handler, pref_middleware, require_auth_middleware, upload_handler,
+    upload_page_handler,
 };
 
 pub fn assets_routes(dir: &PathBuf) -> Router {
@@ -43,6 +44,7 @@ pub fn private_routes(state: AppState) -> Router {
             state.clone(),
             require_auth_middleware,
         ))
+        .route_layer(middleware::from_fn(pref_middleware))
         .with_state(state)
 }
 

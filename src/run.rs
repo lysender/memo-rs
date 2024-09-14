@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::extract::FromRef;
-use axum::{middleware, Router};
+use axum::Router;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_cookies::CookieManagerLayer;
@@ -9,7 +9,7 @@ use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::{info, Level};
 
 use crate::config::Config;
-use crate::web::{assets_routes, pref_middleware, private_routes, public_routes, routes_fallback};
+use crate::web::{assets_routes, private_routes, public_routes, routes_fallback};
 use crate::Result;
 
 #[derive(Clone, FromRef)]
@@ -29,7 +29,6 @@ pub async fn run(config: Config) -> Result<()> {
         .merge(public_routes(state.clone()))
         .merge(assets_routes(&frontend_dir))
         .fallback_service(routes_fallback(state))
-        .route_layer(middleware::from_fn(pref_middleware))
         .layer(CookieManagerLayer::new())
         .layer(
             ServiceBuilder::new().layer(

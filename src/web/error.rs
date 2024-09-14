@@ -148,10 +148,11 @@ impl From<Error> for ErrorInfo {
 
 pub async fn error_handler(
     ctx: Option<Extension<Ctx>>,
-    Extension(pref): Extension<Pref>,
     State(state): State<AppState>,
 ) -> Response<Body> {
     let actor = extract_ctx_actor(&ctx.map(|c| c.0));
+    let pref = Pref::new();
+
     handle_error(
         &state,
         actor,
