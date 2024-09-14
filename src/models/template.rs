@@ -1,9 +1,10 @@
 use crate::{config::AssetManifest, run::AppState};
 
-use super::Actor;
+use super::{Actor, Pref};
 
 #[derive(Clone)]
 pub struct TemplateData {
+    pub theme: String,
     pub title: String,
     pub assets: AssetManifest,
     pub styles: Vec<String>,
@@ -14,11 +15,12 @@ pub struct TemplateData {
 }
 
 impl TemplateData {
-    pub fn new(state: &AppState, actor: Option<Actor>) -> TemplateData {
+    pub fn new(state: &AppState, actor: Option<Actor>, pref: &Pref) -> TemplateData {
         let config = state.config.clone();
         let assets = config.assets.clone();
 
         TemplateData {
+            theme: pref.theme.clone(),
             title: String::from(""),
             assets,
             styles: Vec::new(),

@@ -2,7 +2,7 @@ use askama::Template;
 use axum::extract::Query;
 use axum::{body::Body, extract::State, response::Response, Extension};
 
-use crate::models::{ListPhotosParams, PaginatedMeta};
+use crate::models::{ListPhotosParams, PaginatedMeta, Pref};
 use crate::run::AppState;
 use crate::web::ErrorInfo;
 use crate::{
@@ -39,12 +39,13 @@ struct PhotoGridTemnplate {
 
 pub async fn photos_page_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     Extension(album): Extension<Album>,
     State(state): State<AppState>,
 ) -> Response<Body> {
     let config = state.config.clone();
     let actor = ctx.actor();
-    let mut t = TemplateData::new(&state, Some(actor.clone()));
+    let mut t = TemplateData::new(&state, Some(actor.clone()), &pref);
 
     t.title = format!("Photos - {}", &album.label);
     t.styles = vec![config.assets.gallery_css.clone()];
@@ -68,6 +69,7 @@ pub async fn photos_page_handler(
 
 pub async fn photo_listing_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     Extension(album): Extension<Album>,
     Query(query): Query<ListPhotosParams>,
     State(state): State<AppState>,

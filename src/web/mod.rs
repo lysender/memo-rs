@@ -9,6 +9,7 @@ mod policies;
 mod routes;
 
 pub const AUTH_TOKEN_COOKIE: &str = "auth_token";
+pub const THEME_COOKIE: &str = "theme";
 
 pub use albums::*;
 pub use error::*;

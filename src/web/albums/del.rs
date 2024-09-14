@@ -3,7 +3,7 @@ use axum::http::{Method, StatusCode};
 use axum::Form;
 use axum::{body::Body, extract::State, response::Response, Extension};
 
-use crate::models::DeleteAlbumForm;
+use crate::models::{DeleteAlbumForm, Pref};
 use crate::run::AppState;
 use crate::services::{create_csrf_token, delete_album};
 use crate::Error;
@@ -22,6 +22,7 @@ struct DeleteAlbumTemplate {
 /// Deletes album then redirect or show error
 pub async fn delete_album_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     Extension(album): Extension<Album>,
     State(state): State<AppState>,
     method: Method,
@@ -34,18 +35,19 @@ pub async fn delete_album_handler(
         return handle_error(
             &state,
             Some(actor.clone()),
+            &pref,
             Error::NoDefaultBucket.into(),
             false,
         );
     };
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Delete) {
-        return handle_error(&state, Some(actor.clone()), err.into(), false);
+        return handle_error(&state, Some(actor.clone()), &pref, err.into(), false);
     }
 
     let Ok(token) = create_csrf_token(&album.id, &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize delete album form.".to_string());
-        return handle_error(&state, Some(actor.clone()), error, true);
+        return handle_error(&state, Some(actor.clone()), &pref, error, true);
     };
 
     let mut error_message: Option<String> = None;

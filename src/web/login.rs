@@ -3,11 +3,15 @@ use axum::{
     extract::{Form, State},
     http::Response,
     response::IntoResponse,
+    Extension,
 };
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
 use validator::Validate;
 
-use crate::{models::Actor, run::AppState};
+use crate::{
+    models::{Actor, Pref},
+    run::AppState,
+};
 use crate::{
     models::{LoginFormPayload, TemplateData},
     services::{authenticate, validate_catpcha, AuthPayload},
@@ -31,9 +35,12 @@ struct SubmitLoginData {
     captcha_key: String,
 }
 
-pub async fn login_handler(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn login_handler(
+    Extension(pref): Extension<Pref>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
     let actor: Option<Actor> = None;
-    let mut t = TemplateData::new(&state, actor);
+    let mut t = TemplateData::new(&state, actor, &pref);
     t.title = String::from("Login");
     t.async_scripts = vec![String::from(
         "https://www.google.com/recaptcha/api.js?onload=onloadCallbackRecaptcha&render=explicit",

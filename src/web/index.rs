@@ -6,11 +6,11 @@ use axum::{
     Extension,
 };
 
-use crate::run::AppState;
 use crate::{
     ctx::Ctx,
     models::{ListAlbumsParams, TemplateData},
 };
+use crate::{models::Pref, run::AppState};
 
 use super::{enforce_policy, handle_error, Action, Resource};
 
@@ -23,16 +23,17 @@ struct IndexTemplate {
 
 pub async fn index_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     State(state): State<AppState>,
     Query(query): Query<ListAlbumsParams>,
 ) -> Response<Body> {
     let actor = ctx.actor();
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Read) {
-        return handle_error(&state, Some(actor.clone()), err.into(), true);
+        return handle_error(&state, Some(actor.clone()), &pref, err.into(), true);
     }
 
-    let mut t = TemplateData::new(&state, Some(actor.clone()));
+    let mut t = TemplateData::new(&state, Some(actor.clone()), &pref);
     t.title = String::from("Home");
 
     let tpl = IndexTemplate {

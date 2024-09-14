@@ -1,7 +1,7 @@
 use askama::Template;
 use axum::{body::Body, extract::State, response::Response, Extension, Form};
 
-use crate::models::UpdateAlbumForm;
+use crate::models::{Pref, UpdateAlbumForm};
 use crate::run::AppState;
 use crate::services::{create_csrf_token, update_album};
 use crate::{ctx::Ctx, models::Album, Error};
@@ -51,6 +51,7 @@ pub async fn edit_album_controls_handler(
 /// Renders the edit album form
 pub async fn edit_album_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     Extension(album): Extension<Album>,
     State(state): State<AppState>,
 ) -> Response<Body> {
@@ -58,11 +59,11 @@ pub async fn edit_album_handler(
     let actor = ctx.actor();
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Update) {
-        return handle_error(&state, Some(actor.clone()), err.into(), false);
+        return handle_error(&state, Some(actor.clone()), &pref, err.into(), false);
     }
     let Ok(token) = create_csrf_token(&album.id, &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize edit album form.".to_string());
-        return handle_error(&state, Some(actor.clone()), error, true);
+        return handle_error(&state, Some(actor.clone()), &pref, error, true);
     };
 
     let label = album.label.clone();
@@ -82,6 +83,7 @@ pub async fn edit_album_handler(
 /// Handles the edit album submission
 pub async fn post_edit_album_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     Extension(album): Extension<Album>,
     State(state): State<AppState>,
     payload: Option<Form<UpdateAlbumForm>>,
@@ -94,17 +96,18 @@ pub async fn post_edit_album_handler(
         return handle_error(
             &state,
             Some(actor.clone()),
+            &pref,
             Error::NoDefaultBucket.into(),
             false,
         );
     };
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Update) {
-        return handle_error(&state, Some(actor.clone()), err.into(), false);
+        return handle_error(&state, Some(actor.clone()), &pref, err.into(), false);
     }
     let Ok(token) = create_csrf_token(&album.id, &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize edit album form.".to_string());
-        return handle_error(&state, Some(actor.clone()), error, true);
+        return handle_error(&state, Some(actor.clone()), &pref, error, true);
     };
 
     let mut tpl = EditAlbumFormTemplate {
