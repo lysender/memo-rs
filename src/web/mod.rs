@@ -6,6 +6,7 @@ mod logout;
 mod middlewares;
 mod photos;
 mod policies;
+mod pref;
 mod routes;
 
 pub const AUTH_TOKEN_COOKIE: &str = "auth_token";
@@ -19,4 +20,5 @@ pub use logout::*;
 pub use middlewares::*;
 pub use photos::*;
 pub use policies::*;
+pub use pref::*;
 pub use routes::*;

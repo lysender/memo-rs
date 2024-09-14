@@ -1,6 +1,6 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Pref {
     pub theme: String,
 }
