@@ -28,7 +28,6 @@ pub async fn index_handler(
     Query(query): Query<ListAlbumsParams>,
 ) -> Response<Body> {
     let actor = ctx.actor();
-
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Read) {
         return handle_error(&state, Some(actor.clone()), &pref, err.into(), true);
     }
