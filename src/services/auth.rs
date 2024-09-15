@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::error;
 
-use crate::{
-    models::{Actor, User},
-    Error, Result,
-};
+use crate::{models::Actor, Error, Result};
 
 #[derive(Serialize)]
 pub struct AuthPayload {
@@ -17,7 +14,6 @@ pub struct AuthPayload {
 #[derive(Deserialize)]
 pub struct AuthResponse {
     pub token: String,
-    pub user: User,
 }
 
 pub async fn authenticate(api_url: &str, data: AuthPayload) -> Result<AuthResponse> {

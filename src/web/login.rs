@@ -7,7 +7,10 @@ use axum::{
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
 use validator::Validate;
 
-use crate::{models::Actor, run::AppState};
+use crate::{
+    models::{Actor, Pref},
+    run::AppState,
+};
 use crate::{
     models::{LoginFormPayload, TemplateData},
     services::{authenticate, validate_catpcha, AuthPayload},
@@ -32,8 +35,9 @@ struct SubmitLoginData {
 }
 
 pub async fn login_handler(State(state): State<AppState>) -> impl IntoResponse {
+    let pref = Pref::new();
     let actor: Option<Actor> = None;
-    let mut t = TemplateData::new(&state, actor);
+    let mut t = TemplateData::new(&state, actor, &pref);
     t.title = String::from("Login");
     t.async_scripts = vec![String::from(
         "https://www.google.com/recaptcha/api.js?onload=onloadCallbackRecaptcha&render=explicit",
@@ -116,6 +120,7 @@ pub async fn post_login_handler(
         .http_only(true)
         .max_age(Duration::weeks(1))
         .secure(state.config.ssl)
+        .path("/")
         .build();
 
     cookies.add(auth_cookie);

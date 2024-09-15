@@ -2,11 +2,13 @@ use axum::{
     extract::{Request, State},
     middleware::Next,
     response::{IntoResponse, Redirect, Response},
+    Extension,
 };
 use axum_extra::extract::CookieJar;
 
 use crate::{
     ctx::Ctx,
+    models::Pref,
     run::AppState,
     services::authenticate_token,
     web::{handle_error, AUTH_TOKEN_COOKIE},
@@ -14,6 +16,7 @@ use crate::{
 };
 
 pub async fn require_auth_middleware(
+    Extension(pref): Extension<Pref>,
     State(state): State<AppState>,
     cookies: CookieJar,
     mut req: Request,
@@ -43,10 +46,10 @@ pub async fn require_auth_middleware(
                 if full_page {
                     return Redirect::to("/login").into_response();
                 } else {
-                    return handle_error(&state, None, err.into(), full_page);
+                    return handle_error(&state, None, &pref, err.into(), full_page);
                 }
             }
-            _ => return handle_error(&state, None, err.into(), full_page),
+            _ => return handle_error(&state, None, &pref, err.into(), full_page),
         },
     }
 

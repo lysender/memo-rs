@@ -4,7 +4,7 @@ use axum::extract::Query;
 use axum::http::HeaderMap;
 use axum::{body::Body, extract::State, response::Response, Extension};
 
-use crate::models::UploadParams;
+use crate::models::{Pref, UploadParams};
 use crate::run::AppState;
 use crate::services::{create_csrf_token, upload_photo};
 use crate::web::{handle_error, handle_error_message, ErrorInfo};
@@ -27,11 +27,13 @@ struct UploadPageTemplate {
 #[derive(Template)]
 #[template(path = "widgets/photo_grid_item.html")]
 struct UploadedPhotoTemplate {
+    theme: String,
     photo: Photo,
 }
 
 pub async fn upload_page_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     Extension(album): Extension<Album>,
     State(state): State<AppState>,
 ) -> Response<Body> {
@@ -39,13 +41,13 @@ pub async fn upload_page_handler(
     let actor = ctx.actor();
 
     if let Err(err) = enforce_policy(actor, Resource::Photo, Action::Create) {
-        return handle_error(&state, Some(actor.clone()), err.into(), true);
+        return handle_error(&state, Some(actor.clone()), &pref, err.into(), true);
     }
     let Ok(token) = create_csrf_token(&album.id, &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize upload photos form.".to_string());
-        return handle_error(&state, Some(actor.clone()), error, true);
+        return handle_error(&state, Some(actor.clone()), &pref, error, true);
     };
-    let mut t = TemplateData::new(&state, Some(actor.clone()));
+    let mut t = TemplateData::new(&state, Some(actor.clone()), &pref);
 
     t.title = format!("Photos - {} - Upload Photos", &album.label);
     t.scripts = vec![config.assets.upload_js.clone()];
@@ -60,6 +62,7 @@ pub async fn upload_page_handler(
 
 pub async fn upload_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     Extension(album): Extension<Album>,
     State(state): State<AppState>,
     Query(query): Query<UploadParams>,
@@ -74,6 +77,7 @@ pub async fn upload_handler(
         return handle_error(
             &state,
             Some(actor.clone()),
+            &pref,
             Error::NoDefaultBucket.into(),
             false,
         );
@@ -81,7 +85,7 @@ pub async fn upload_handler(
 
     let Ok(token) = create_csrf_token(&album.id, &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize upload photos form.".to_string());
-        return handle_error(&state, Some(actor.clone()), error, true);
+        return handle_error(&state, Some(actor.clone()), &pref, error, true);
     };
 
     let result = upload_photo(
@@ -97,7 +101,10 @@ pub async fn upload_handler(
 
     match result {
         Ok(photo) => {
-            let tpl = UploadedPhotoTemplate { photo };
+            let tpl = UploadedPhotoTemplate {
+                photo,
+                theme: pref.theme,
+            };
             Response::builder()
                 .status(201)
                 .header("X-Next-Token", token)

@@ -3,7 +3,7 @@ use axum::{body::Body, extract::State, http::StatusCode, response::Response, Ext
 
 use crate::{
     ctx::{extract_ctx_actor, Ctx},
-    models::{Actor, TemplateData},
+    models::{Actor, Pref, TemplateData},
     run::AppState,
     Error,
 };
@@ -151,9 +151,12 @@ pub async fn error_handler(
     State(state): State<AppState>,
 ) -> Response<Body> {
     let actor = extract_ctx_actor(&ctx.map(|c| c.0));
+    let pref = Pref::new();
+
     handle_error(
         &state,
         actor,
+        &pref,
         ErrorInfo {
             status_code: StatusCode::NOT_FOUND,
             title: String::from("Not Found"),
@@ -168,6 +171,7 @@ pub async fn error_handler(
 pub fn handle_error(
     state: &AppState,
     actor: Option<Actor>,
+    pref: &Pref,
     error: ErrorInfo,
     full_page: bool,
 ) -> Response<Body> {
@@ -175,7 +179,7 @@ pub fn handle_error(
         let title = error.title.as_str();
         let status_code = error.status_code;
 
-        let mut t = TemplateData::new(&state, actor);
+        let mut t = TemplateData::new(&state, actor, pref);
         t.title = String::from(title);
 
         let tpl = ErrorPageData { t, error };

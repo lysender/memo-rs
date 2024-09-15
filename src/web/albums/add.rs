@@ -2,7 +2,7 @@ use askama::Template;
 use axum::http::StatusCode;
 use axum::{body::Body, extract::State, response::Response, Extension, Form};
 
-use crate::models::NewAlbumForm;
+use crate::models::{NewAlbumForm, Pref};
 use crate::run::AppState;
 use crate::services::create_csrf_token;
 use crate::Error;
@@ -29,21 +29,22 @@ struct AlbumFormTemplate {
 
 pub async fn new_album_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     State(state): State<AppState>,
 ) -> Response<Body> {
     let config = state.config.clone();
     let actor = ctx.actor();
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Create) {
-        return handle_error(&state, Some(actor.clone()), err.into(), true);
+        return handle_error(&state, Some(actor.clone()), &pref, err.into(), true);
     }
 
-    let mut t = TemplateData::new(&state, Some(actor.clone()));
+    let mut t = TemplateData::new(&state, Some(actor.clone()), &pref);
     t.title = String::from("Create New Album");
 
     let Ok(token) = create_csrf_token("new_album", &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize new album form.".to_string());
-        return handle_error(&state, Some(actor.clone()), error, true);
+        return handle_error(&state, Some(actor.clone()), &pref, error, true);
     };
 
     let tpl = NewAlbumTemplate {
@@ -65,6 +66,7 @@ pub async fn new_album_handler(
 
 pub async fn post_new_album_handler(
     Extension(ctx): Extension<Ctx>,
+    Extension(pref): Extension<Pref>,
     State(state): State<AppState>,
     payload: Option<Form<NewAlbumForm>>,
 ) -> Response<Body> {
@@ -75,18 +77,19 @@ pub async fn post_new_album_handler(
         return handle_error(
             &state,
             Some(actor.clone()),
+            &pref,
             Error::NoDefaultBucket.into(),
             false,
         );
     };
 
     if let Err(err) = enforce_policy(actor, Resource::Album, Action::Create) {
-        return handle_error(&state, Some(actor.clone()), err.into(), false);
+        return handle_error(&state, Some(actor.clone()), &pref, err.into(), false);
     }
 
     let Ok(token) = create_csrf_token("new_album", &config.jwt_secret) else {
         let error = ErrorInfo::new("Failed to initialize new album form.".to_string());
-        return handle_error(&state, Some(actor.clone()), error, true);
+        return handle_error(&state, Some(actor.clone()), &pref, error, true);
     };
 
     let mut tpl = AlbumFormTemplate {
