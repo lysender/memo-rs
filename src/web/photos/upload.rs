@@ -27,6 +27,7 @@ struct UploadPageTemplate {
 #[derive(Template)]
 #[template(path = "widgets/photo_grid_item.html")]
 struct UploadedPhotoTemplate {
+    theme: String,
     photo: Photo,
 }
 
@@ -100,7 +101,10 @@ pub async fn upload_handler(
 
     match result {
         Ok(photo) => {
-            let tpl = UploadedPhotoTemplate { photo };
+            let tpl = UploadedPhotoTemplate {
+                photo,
+                theme: pref.theme,
+            };
             Response::builder()
                 .status(201)
                 .header("X-Next-Token", token)

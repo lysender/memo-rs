@@ -29,6 +29,7 @@ struct PhotosTemplate {
 #[derive(Template)]
 #[template(path = "widgets/photo_grid.html")]
 struct PhotoGridTemnplate {
+    theme: String,
     album: Album,
     photos: Vec<Photo>,
     meta: Option<PaginatedMeta>,
@@ -77,6 +78,7 @@ pub async fn photo_listing_handler(
     let album_id = album.id.clone();
 
     let mut tpl = PhotoGridTemnplate {
+        theme: pref.theme,
         album,
         photos: Vec::new(),
         meta: None,
