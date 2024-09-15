@@ -3,7 +3,6 @@ use axum::{
     extract::{Form, State},
     http::Response,
     response::IntoResponse,
-    Extension,
 };
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
 use validator::Validate;
@@ -121,6 +120,7 @@ pub async fn post_login_handler(
         .http_only(true)
         .max_age(Duration::weeks(1))
         .secure(state.config.ssl)
+        .path("/")
         .build();
 
     cookies.add(auth_cookie);

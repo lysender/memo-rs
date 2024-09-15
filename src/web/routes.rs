@@ -13,10 +13,10 @@ use crate::web::{
 
 use super::{
     album_listing_handler, album_listing_middleware, album_middleware,
-    confirm_delete_photo_handler, delete_album_handler, edit_album_controls_handler,
-    edit_album_handler, exec_delete_photo_handler, photo_middleware, post_edit_album_handler,
-    pre_delete_photo_handler, pref_middleware, require_auth_middleware, theme_handler,
-    upload_handler, upload_page_handler,
+    confirm_delete_photo_handler, dark_theme_handler, delete_album_handler,
+    edit_album_controls_handler, edit_album_handler, exec_delete_photo_handler,
+    light_theme_handler, photo_middleware, post_edit_album_handler, pre_delete_photo_handler,
+    pref_middleware, require_auth_middleware, upload_handler, upload_page_handler,
 };
 
 pub fn assets_routes(dir: &PathBuf) -> Router {
@@ -39,7 +39,8 @@ pub fn assets_routes(dir: &PathBuf) -> Router {
 pub fn private_routes(state: AppState) -> Router {
     Router::new()
         .route("/", get(index_handler))
-        .route("/prefs/set-theme", post(theme_handler))
+        .route("/prefs/theme/light", post(light_theme_handler))
+        .route("/prefs/theme/dark", post(dark_theme_handler))
         .nest("/albums", album_routes(state.clone()))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

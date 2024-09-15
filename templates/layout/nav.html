@@ -9,43 +9,46 @@
 
         {% match t.actor %}
             {% when Some with (actor) %}
-                <a
-                    role="button"
-                    class="navbar-burger navbar-menu-header-group"
-                    aria-label="menu"
-                    aria-expanded="false"
-                    data-target="main-menu"
-                    id="main-menu-burger"
-                >
-                        <span aria-hidden="true"></span>
-                        <span aria-hidden="true"></span>
-                        <span aria-hidden="true"></span>
-                </a>
+            <a
+                role="button"
+                class="navbar-burger navbar-menu-header-group"
+                aria-label="menu"
+                aria-expanded="false"
+                data-target="main-menu"
+                id="main-menu-burger"
+            >
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
             {% when None %}
         {% endmatch %}
     </div>
 
     {% match t.actor %}
         {% when Some with (actor) %}
-            <div class="navbar-menu navbar-menu-header-group" id="main-menu">
-                <div class="navbar-end">
-                    <div class="navbar-item">
-                        <span>{{ actor.user.username }}</span>
-                    </div>
-                    <div class="navbar-item">
-                        <div class="buttons">
-                            <a
-                                id="btn-logout"
-                                class="button is-light"
-                                hx-post="/logout"
-                                hx-swap="innerHTML"
-                            >
-                                    Log out
-                            </a>
-                        </div>
+        <div class="navbar-menu navbar-menu-header-group" id="main-menu">
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    {% include "widgets/set_theme.html" %}
+                </div>
+                <div class="navbar-item">
+                    <span>{{ actor.user.username }}</span>
+                </div>
+                <div class="navbar-item">
+                    <div class="buttons">
+                        <a
+                            id="btn-logout"
+                            class="button is-light"
+                            hx-post="/logout"
+                            hx-swap="innerHTML"
+                        >
+                                Log out
+                        </a>
                     </div>
                 </div>
             </div>
+        </div>
         {% when None %}
     {% endmatch %}
 </nav>

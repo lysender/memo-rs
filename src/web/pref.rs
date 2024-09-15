@@ -1,31 +1,56 @@
-use axum::{body::Body, extract::State, response::Response, Form};
+use askama::Template;
+use axum::{body::Body, extract::State, response::Response};
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
 
-use crate::{models::Pref, run::AppState};
+use crate::run::AppState;
 
 use super::THEME_COOKIE;
 
-pub async fn theme_handler(
+#[derive(Template)]
+#[template(path = "widgets/set_theme.html")]
+struct ThemeTemplate {
+    t: InnerTemplate,
+}
+
+struct InnerTemplate {
+    theme: String,
+}
+
+pub async fn light_theme_handler(
     cookies: Cookies,
     State(state): State<AppState>,
-    payload: Form<Pref>,
 ) -> Response<Body> {
-    let mut theme: String = "light".to_string();
-    let t_val = payload.theme.as_str();
-    if t_val == "dark" || t_val == "light" {
-        theme = t_val.to_string();
-    }
+    theme_handler(state, cookies, "light", "LightThemeSetEvent").await
+}
 
-    let theme_cookie = Cookie::build((THEME_COOKIE, theme))
+pub async fn dark_theme_handler(cookies: Cookies, State(state): State<AppState>) -> Response<Body> {
+    theme_handler(state, cookies, "dark", "DarkThemeSetEvent").await
+}
+
+async fn theme_handler(
+    state: AppState,
+    cookies: Cookies,
+    theme: &str,
+    event: &str,
+) -> Response<Body> {
+    let theme_cookie = Cookie::build((THEME_COOKIE, theme.to_string()))
         .http_only(true)
-        .max_age(Duration::weeks(999))
+        .max_age(Duration::days(365))
         .secure(state.config.ssl)
+        .path("/")
         .build();
 
     cookies.add(theme_cookie);
 
-    // Render the selected theme button
-    // then let the frontend switch the theme
+    let tpl = ThemeTemplate {
+        t: InnerTemplate {
+            theme: theme.to_string(),
+        },
+    };
 
-    todo!()
+    Response::builder()
+        .status(200)
+        .header("HX-Trigger", event)
+        .body(Body::from(tpl.render().unwrap()))
+        .unwrap()
 }
