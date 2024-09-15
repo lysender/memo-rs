@@ -17,5 +17,22 @@
         evt.detail.shouldSwap = true;
       }
     });
+
+    document.body.addEventListener('LightThemeSetEvent', function () {
+      switchTheme('light');
+    });
+
+    document.body.addEventListener('DarkThemeSetEvent', function () {
+      switchTheme('dark');
+    });
+  }
+
+  function switchTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.dataset.theme = 'dark';
+    } else {
+      root.dataset.theme = 'light';
+    }
   }
 })();
