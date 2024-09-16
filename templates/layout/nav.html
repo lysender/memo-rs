@@ -33,7 +33,10 @@
                     {% include "widgets/set_theme.html" %}
                 </div>
                 <div class="navbar-item">
-                    <span>{{ actor.user.username }}</span>
+                    <span class="user-info">
+                        <span class="icon"><i class="fas fa-user"></i></span>
+                        <span>{{ actor.user.username }}</span>
+                    </span>
                 </div>
                 <div class="navbar-item">
                     <div class="buttons">
