@@ -26,6 +26,7 @@ use memo::validators::flatten_errors;
 #[derive(Debug, Clone, Serialize)]
 pub struct FileObject {
     pub id: String,
+    pub org_id: String,
     pub dir_id: String,
     pub name: String,
     pub filename: String,
@@ -76,6 +77,7 @@ impl From<FileDto> for FileObject {
 
         Self {
             id: file.id,
+            org_id: file.org_id,
             dir_id: file.dir_id,
             name: file.name,
             filename: file.filename,
@@ -110,6 +112,7 @@ impl From<FileObject> for FileDto {
 
         Self {
             id: file.id,
+            org_id: file.org_id,
             dir_id: file.dir_id,
             name: file.name,
             filename: file.filename,
@@ -127,7 +130,7 @@ impl From<FileObject> for FileDto {
 
 impl FromTursoRow for FileDto {
     fn from_row(row: &Row) -> Result<Self> {
-        let img_versions = match opt_row_text(row, 7)? {
+        let img_versions = match opt_row_text(row, 8)? {
             Some(versions_str) => {
                 let versions: Vec<ImgVersionDto> = versions_str
                     .split(',')
@@ -144,17 +147,18 @@ impl FromTursoRow for FileDto {
 
         Ok(Self {
             id: row_text(row, 0)?,
-            dir_id: row_text(row, 1)?,
-            name: row_text(row, 2)?,
-            filename: row_text(row, 3)?,
-            content_type: row_text(row, 4)?,
-            size: row_integer(row, 5)?,
-            is_image: matches!(row_integer(row, 6)?, 1),
+            org_id: row_text(row, 1)?,
+            dir_id: row_text(row, 2)?,
+            name: row_text(row, 3)?,
+            filename: row_text(row, 4)?,
+            content_type: row_text(row, 5)?,
+            size: row_integer(row, 6)?,
+            is_image: matches!(row_integer(row, 7)?, 1),
             img_versions,
-            img_taken_at: opt_row_integer(row, 8)?,
+            img_taken_at: opt_row_integer(row, 9)?,
             url: None,
-            created_at: row_integer(row, 9)?,
-            updated_at: row_integer(row, 10)?,
+            created_at: row_integer(row, 10)?,
+            updated_at: row_integer(row, 11)?,
         })
     }
 }
@@ -252,6 +256,7 @@ impl FileRepo {
         let mut query = r#"
             SELECT
                 id,
+                org_id,
                 dir_id,
                 name,
                 filename,
@@ -296,6 +301,7 @@ impl FileRepo {
             INSERT INTO files
             (
                 id,
+                org_id,
                 dir_id,
                 name,
                 filename,
@@ -310,6 +316,7 @@ impl FileRepo {
             VALUES
             (
                 :id,
+                :org_id,
                 :dir_id,
                 :name,
                 :filename,
@@ -325,6 +332,7 @@ impl FileRepo {
 
         let mut q_params = new_query_params();
         q_params.push(text_param(":id", file.id.clone()));
+        q_params.push(text_param(":org_id", file.org_id.clone()));
         q_params.push(text_param(":dir_id", file.dir_id.clone()));
         q_params.push(text_param(":name", file.name.clone()));
         q_params.push(text_param(":filename", file.filename.clone()));
@@ -377,6 +385,7 @@ impl FileRepo {
         let query = r#"
             SELECT
                 id,
+                org_id,
                 dir_id,
                 name,
                 filename,
@@ -407,6 +416,7 @@ impl FileRepo {
         let query = r#"
             SELECT
                 id,
+                org_id,
                 dir_id,
                 name,
                 filename,

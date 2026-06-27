@@ -15,6 +15,7 @@ pub const MAX_FILE_SIZE: i64 = 2147483648; // 2GB
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileDto {
     pub id: String,
+    pub org_id: String,
     pub dir_id: String,
     pub name: String,
     pub filename: String,

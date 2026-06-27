@@ -280,6 +280,7 @@ pub async fn create_remote_file(
 
     let file = FileDto {
         id: generate_prefixed_id(IdPrefix::File),
+        org_id: dir.org_id.clone(),
         dir_id: dir.id.clone(),
         name: data.orig_filename.clone(),
         filename: data.new_filename.clone(),
@@ -401,6 +402,7 @@ fn init_file(dir: &DirDto, data: &DownloadedFile) -> Result<FileDto> {
 
     let file = FileDto {
         id: generate_prefixed_id(IdPrefix::File),
+        org_id: dir.org_id.clone(),
         dir_id: dir.id.clone(),
         name: data.name.clone(),
         filename: data.filename.clone(),
