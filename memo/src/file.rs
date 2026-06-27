@@ -12,11 +12,45 @@ pub const MAX_THUMB_DIMENSION: u32 = 200;
 
 pub const MAX_FILE_SIZE: i64 = 2147483648; // 2GB
 
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+pub enum FileType {
+    File,
+    Image,
+    Video,
+    Note,
+}
+
+impl TryFrom<&str> for FileType {
+    type Error = String;
+
+    fn try_from(value: &str) -> core::result::Result<Self, Self::Error> {
+        match value {
+            "file" => Ok(Self::File),
+            "image" => Ok(Self::Image),
+            "video" => Ok(Self::Video),
+            "note" => Ok(Self::Note),
+            _ => Err(format!("Invalid file type: {value}")),
+        }
+    }
+}
+
+impl core::fmt::Display for FileType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Self::File => write!(f, "{}", "file"),
+            Self::Image => write!(f, "{}", "image"),
+            Self::Video => write!(f, "{}", "video"),
+            Self::Note => write!(f, "{}", "note"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileDto {
     pub id: String,
     pub org_id: String,
     pub dir_id: String,
+    pub file_type: FileType,
     pub name: String,
     pub filename: String,
     pub content_type: String,
@@ -25,6 +59,7 @@ pub struct FileDto {
     // Only available on non-image files
     pub url: Option<String>,
 
+    // For backward compatiblity only, use file_type instead
     pub is_image: bool,
 
     // Only available for image files, main url is in orig version

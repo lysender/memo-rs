@@ -6,6 +6,7 @@ use exif::{In, Tag};
 use image::DynamicImage;
 use image::ImageReader;
 use image::imageops;
+use memo::file::FileType;
 use snafu::ResultExt;
 use storage::DownloadedFile;
 use tracing::error;
@@ -278,10 +279,12 @@ pub async fn create_remote_file(
 ) -> Result<FileDto> {
     let today = chrono::Utc::now().timestamp();
 
+    // Assumes FileType::File, however, in the future, there will be a Video type
     let file = FileDto {
         id: generate_prefixed_id(IdPrefix::File),
         org_id: dir.org_id.clone(),
         dir_id: dir.id.clone(),
+        file_type: FileType::File,
         name: data.orig_filename.clone(),
         filename: data.new_filename.clone(),
         content_type: data.content_type.clone(),
@@ -390,11 +393,16 @@ fn cleanup_temp_uploads(data: &DownloadedFile, file: Option<&FileDto>) -> Result
 fn init_file(dir: &DirDto, data: &DownloadedFile) -> Result<FileDto> {
     let mut is_image = false;
 
+    // Current design limits file_type to either File or Image
+    // In the future, there will be a Video and Note
+    let mut file_type = FileType::File;
+
     // Try to get content type from file, fallback to the one from upload metadata
     let content_type = get_content_type(&data.path).unwrap_or(data.content_type.clone());
 
     if ALLOWED_IMAGE_TYPES.contains(&content_type.as_str()) {
         is_image = true;
+        file_type = FileType::Image;
     }
 
     // May be a few second delayed due to image processing
@@ -404,6 +412,7 @@ fn init_file(dir: &DirDto, data: &DownloadedFile) -> Result<FileDto> {
         id: generate_prefixed_id(IdPrefix::File),
         org_id: dir.org_id.clone(),
         dir_id: dir.id.clone(),
+        file_type,
         name: data.name.clone(),
         filename: data.filename.clone(),
         content_type,

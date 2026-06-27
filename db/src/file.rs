@@ -19,7 +19,7 @@ use crate::turso_params::{
 };
 use crate::{Error, Result};
 use memo::dir::DirDto;
-use memo::file::{FileDto, ImgVersionDto};
+use memo::file::{FileDto, FileType, ImgVersionDto};
 use memo::pagination::Paginated;
 use memo::validators::flatten_errors;
 
@@ -28,6 +28,7 @@ pub struct FileObject {
     pub id: String,
     pub org_id: String,
     pub dir_id: String,
+    pub file_type: String,
     pub name: String,
     pub filename: String,
     pub content_type: String,
@@ -79,6 +80,7 @@ impl From<FileDto> for FileObject {
             id: file.id,
             org_id: file.org_id,
             dir_id: file.dir_id,
+            file_type: file.file_type.to_string(),
             name: file.name,
             filename: file.filename,
             content_type: file.content_type,
@@ -110,10 +112,15 @@ impl From<FileObject> for FileDto {
             None => None,
         };
 
+        // NOTE: This should return an error but current design prevents us to
+        // for now, will default to FileType::File on error
+        let file_type = FileType::try_from(file.file_type.as_str()).unwrap_or(FileType::File);
+
         Self {
             id: file.id,
             org_id: file.org_id,
             dir_id: file.dir_id,
+            file_type,
             name: file.name,
             filename: file.filename,
             content_type: file.content_type,
@@ -145,10 +152,15 @@ impl FromTursoRow for FileDto {
             None => None,
         };
 
+        // NOTE: This should return an error but current design prevents us to
+        // for now, will default to FileType::File on error
+        let file_type = FileType::try_from(row_text(row, 3)?.as_str()).unwrap_or(FileType::File);
+
         Ok(Self {
             id: row_text(row, 0)?,
             org_id: row_text(row, 1)?,
             dir_id: row_text(row, 2)?,
+            file_type,
             name: row_text(row, 3)?,
             filename: row_text(row, 4)?,
             content_type: row_text(row, 5)?,
