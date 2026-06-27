@@ -13,7 +13,7 @@ use crate::error::{CreateFileSnafu, UploadDirSnafu, UploadFileSnafu};
 use crate::provider::{DownloadRequest, DownloadedFile, UploadUrlRequest};
 use crate::{Error, Result};
 use memo::dir::DirMeta;
-use memo::file::{FileDto, ImgVersion, ImgVersionDto, ORIGINAL_PATH};
+use memo::file::{FileDto, FileType, ImgVersion, ImgVersionDto, ORIGINAL_PATH};
 
 pub struct AwsStorageProvider {
     client: S3Client,
@@ -93,7 +93,7 @@ impl AwsStorageProvider {
     }
 
     pub async fn upload(&self, dir: &DirMeta, source_dir: &Path, file: &FileDto) -> Result<()> {
-        if file.is_image {
+        if file.file_type == FileType::Image {
             return self.upload_image_object(dir, source_dir, file).await;
         }
 
@@ -151,7 +151,7 @@ impl AwsStorageProvider {
     }
 
     pub async fn delete(&self, dir: &DirMeta, file: &FileDto) -> Result<()> {
-        if file.is_image {
+        if file.file_type == FileType::Image {
             if let Some(versions) = &file.img_versions {
                 for version in versions.iter() {
                     let path = format!(
@@ -277,7 +277,7 @@ async fn format_file_single(
 ) -> Result<FileDto> {
     let bucket_name = &dir.bucket_name;
 
-    if file.is_image {
+    if file.file_type == FileType::Image {
         if let Some(versions) = &file.img_versions
             && !versions.is_empty()
         {

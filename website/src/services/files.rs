@@ -1,5 +1,7 @@
 use memo::dir::DirType;
-use memo::file::{FileDto, ImgDimension, ImgVersion, SignedFileUploadDto, SignedRemoteUploadDto};
+use memo::file::{
+    FileDto, FileType, ImgDimension, ImgVersion, SignedFileUploadDto, SignedRemoteUploadDto,
+};
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, ensure};
 
@@ -51,7 +53,7 @@ impl TryFrom<FileDto> for Photo {
     type Error = String;
 
     fn try_from(file: FileDto) -> core::result::Result<Self, Self::Error> {
-        if !file.is_image {
+        if file.file_type != FileType::Image {
             return Err("File is not an image".into());
         }
 

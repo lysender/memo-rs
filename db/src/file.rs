@@ -19,14 +19,16 @@ use crate::turso_params::{
 };
 use crate::{Error, Result};
 use memo::dir::DirDto;
-use memo::file::{FileDto, ImgVersionDto};
+use memo::file::{FileDto, FileType, ImgVersionDto};
 use memo::pagination::Paginated;
 use memo::validators::flatten_errors;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct FileObject {
     pub id: String,
+    pub org_id: String,
     pub dir_id: String,
+    pub file_type: String,
     pub name: String,
     pub filename: String,
     pub content_type: String,
@@ -76,7 +78,9 @@ impl From<FileDto> for FileObject {
 
         Self {
             id: file.id,
+            org_id: file.org_id,
             dir_id: file.dir_id,
+            file_type: file.file_type.to_string(),
             name: file.name,
             filename: file.filename,
             content_type: file.content_type,
@@ -108,9 +112,15 @@ impl From<FileObject> for FileDto {
             None => None,
         };
 
+        // NOTE: This should return an error but current design prevents us to
+        // for now, will default to FileType::File on error
+        let file_type = FileType::try_from(file.file_type.as_str()).unwrap_or(FileType::File);
+
         Self {
             id: file.id,
+            org_id: file.org_id,
             dir_id: file.dir_id,
+            file_type,
             name: file.name,
             filename: file.filename,
             content_type: file.content_type,
@@ -127,7 +137,7 @@ impl From<FileObject> for FileDto {
 
 impl FromTursoRow for FileDto {
     fn from_row(row: &Row) -> Result<Self> {
-        let img_versions = match opt_row_text(row, 7)? {
+        let img_versions = match opt_row_text(row, 9)? {
             Some(versions_str) => {
                 let versions: Vec<ImgVersionDto> = versions_str
                     .split(',')
@@ -142,19 +152,25 @@ impl FromTursoRow for FileDto {
             None => None,
         };
 
+        // NOTE: This should return an error but current design prevents us to
+        // for now, will default to FileType::File on error
+        let file_type = FileType::try_from(row_text(row, 3)?.as_str()).unwrap_or(FileType::File);
+
         Ok(Self {
             id: row_text(row, 0)?,
-            dir_id: row_text(row, 1)?,
-            name: row_text(row, 2)?,
-            filename: row_text(row, 3)?,
-            content_type: row_text(row, 4)?,
-            size: row_integer(row, 5)?,
-            is_image: matches!(row_integer(row, 6)?, 1),
+            org_id: row_text(row, 1)?,
+            dir_id: row_text(row, 2)?,
+            file_type,
+            name: row_text(row, 4)?,
+            filename: row_text(row, 5)?,
+            content_type: row_text(row, 6)?,
+            size: row_integer(row, 7)?,
+            is_image: matches!(row_integer(row, 8)?, 1),
             img_versions,
-            img_taken_at: opt_row_integer(row, 8)?,
+            img_taken_at: opt_row_integer(row, 10)?,
             url: None,
-            created_at: row_integer(row, 9)?,
-            updated_at: row_integer(row, 10)?,
+            created_at: row_integer(row, 11)?,
+            updated_at: row_integer(row, 12)?,
         })
     }
 }
@@ -252,7 +268,9 @@ impl FileRepo {
         let mut query = r#"
             SELECT
                 id,
+                org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,
@@ -289,14 +307,16 @@ impl FileRepo {
         Ok(Paginated::new(items, page, per_page, total_records))
     }
 
-    pub async fn create(&self, file_dto: FileDto) -> Result<FileDto> {
-        let file: FileObject = file_dto.clone().into();
+    pub async fn create(&self, data: FileDto) -> Result<FileDto> {
+        let file: FileObject = data.clone().into();
 
         let query = r#"
             INSERT INTO files
             (
                 id,
+                org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,
@@ -310,7 +330,9 @@ impl FileRepo {
             VALUES
             (
                 :id,
+                :org_id,
                 :dir_id,
+                :file_type,
                 :name,
                 :filename,
                 :content_type,
@@ -325,7 +347,9 @@ impl FileRepo {
 
         let mut q_params = new_query_params();
         q_params.push(text_param(":id", file.id.clone()));
+        q_params.push(text_param(":org_id", file.org_id.clone()));
         q_params.push(text_param(":dir_id", file.dir_id.clone()));
+        q_params.push(text_param(":file_type", file.file_type.to_string()));
         q_params.push(text_param(":name", file.name.clone()));
         q_params.push(text_param(":filename", file.filename.clone()));
         q_params.push(text_param(":content_type", file.content_type.clone()));
@@ -377,7 +401,9 @@ impl FileRepo {
         let query = r#"
             SELECT
                 id,
+                org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,
@@ -407,7 +433,9 @@ impl FileRepo {
         let query = r#"
             SELECT
                 id,
+                org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,

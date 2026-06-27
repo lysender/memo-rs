@@ -16,6 +16,11 @@ const MIGRATIONS: &[&str] = &[
     include_str!("../db/migrations/memo/03-create-dirs.sql"),
     include_str!("../db/migrations/memo/04-create-users.sql"),
     include_str!("../db/migrations/memo/05-create-files.sql"),
+    include_str!("../db/migrations/memo/06-dirs-dir-type.sql"),
+    include_str!("../db/migrations/memo/07-files-org-id.sql"),
+    include_str!("../db/migrations/memo/08-files-org-id-populate.sql"),
+    include_str!("../db/migrations/memo/09-files-file-type.sql"),
+    include_str!("../db/migrations/memo/10-files-file-type-populate.sql"),
 ];
 
 pub struct TestCtx {
