@@ -137,7 +137,7 @@ impl From<FileObject> for FileDto {
 
 impl FromTursoRow for FileDto {
     fn from_row(row: &Row) -> Result<Self> {
-        let img_versions = match opt_row_text(row, 8)? {
+        let img_versions = match opt_row_text(row, 9)? {
             Some(versions_str) => {
                 let versions: Vec<ImgVersionDto> = versions_str
                     .split(',')
@@ -161,16 +161,16 @@ impl FromTursoRow for FileDto {
             org_id: row_text(row, 1)?,
             dir_id: row_text(row, 2)?,
             file_type,
-            name: row_text(row, 3)?,
-            filename: row_text(row, 4)?,
-            content_type: row_text(row, 5)?,
-            size: row_integer(row, 6)?,
-            is_image: matches!(row_integer(row, 7)?, 1),
+            name: row_text(row, 4)?,
+            filename: row_text(row, 5)?,
+            content_type: row_text(row, 6)?,
+            size: row_integer(row, 7)?,
+            is_image: matches!(row_integer(row, 8)?, 1),
             img_versions,
-            img_taken_at: opt_row_integer(row, 9)?,
+            img_taken_at: opt_row_integer(row, 10)?,
             url: None,
-            created_at: row_integer(row, 10)?,
-            updated_at: row_integer(row, 11)?,
+            created_at: row_integer(row, 11)?,
+            updated_at: row_integer(row, 12)?,
         })
     }
 }
@@ -270,6 +270,7 @@ impl FileRepo {
                 id,
                 org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,
@@ -306,8 +307,8 @@ impl FileRepo {
         Ok(Paginated::new(items, page, per_page, total_records))
     }
 
-    pub async fn create(&self, file_dto: FileDto) -> Result<FileDto> {
-        let file: FileObject = file_dto.clone().into();
+    pub async fn create(&self, data: FileDto) -> Result<FileDto> {
+        let file: FileObject = data.clone().into();
 
         let query = r#"
             INSERT INTO files
@@ -315,6 +316,7 @@ impl FileRepo {
                 id,
                 org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,
@@ -330,6 +332,7 @@ impl FileRepo {
                 :id,
                 :org_id,
                 :dir_id,
+                :file_type,
                 :name,
                 :filename,
                 :content_type,
@@ -346,6 +349,7 @@ impl FileRepo {
         q_params.push(text_param(":id", file.id.clone()));
         q_params.push(text_param(":org_id", file.org_id.clone()));
         q_params.push(text_param(":dir_id", file.dir_id.clone()));
+        q_params.push(text_param(":file_type", file.file_type.to_string()));
         q_params.push(text_param(":name", file.name.clone()));
         q_params.push(text_param(":filename", file.filename.clone()));
         q_params.push(text_param(":content_type", file.content_type.clone()));
@@ -399,6 +403,7 @@ impl FileRepo {
                 id,
                 org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,
@@ -430,6 +435,7 @@ impl FileRepo {
                 id,
                 org_id,
                 dir_id,
+                file_type,
                 name,
                 filename,
                 content_type,
