@@ -40,69 +40,6 @@ Release:
 cargo build --release
 ```
 
-## Deployment
-
-Below is an example of a simple production deployment setup using systemd.
-
-You can deploy it however you want though.
-
-### Setup systemd
-
-Edit systemd service file:
-
-First time?:
-
-```
-sudo systemctl edit --full --force memo-website.service
-```
-
-Edit?:
-```
-sudo systemctl edit --full memo-website.service
-```
-
-File: `/etc/systemd/system/memo-website.service`
-
-```
-[Unit]
-Description=memo-website Make memories
-
-[Service]
-User=www-data
-Group=www-data
-
-Environment="PORT=11000"
-Environment="SSL=false"
-Environment="FRONTEND_DIR=/data/www/html/sites/memo-rs/website/frontend"
-Environment="CAPTCHA_SITE_KEY=key"
-Environment="CAPTCHA_API_KEY=secret"
-Environment="JWT_SECRET=secret"
-Environment="API_URL=http://localhost:11001"
-
-WorkingDirectory=/data/www/html/sites/memo-rs/website
-ExecStart=/data/www/html/sites/memo-rs/target/release/website
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=multi-user.target
-```
-
-To enable it for the first time:
-
-```
-sudo systemctl enable memo-website.service
-```
-
-Various commands:
-
-```
-sudo systemctl start memo-website.service
-sudo systemctl stop memo-website.service
-sudo systemctl restart memo-website.service
-sudo systemctl status memo-website.service
-```
-
 ### nginx
 
 nginx config:
