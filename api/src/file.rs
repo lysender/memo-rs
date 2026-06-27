@@ -144,7 +144,7 @@ pub async fn create_file(state: AppState, dir: &DirDto, data: &DownloadedFile) -
         }
     };
 
-    if dir_meta.dir_type == DirType::Photos && !file_dto.is_image {
+    if dir_meta.dir_type == DirType::Photos && file_dto.file_type != FileType::Image {
         cleanup(data, None);
 
         return ValidationSnafu {
@@ -189,7 +189,7 @@ pub async fn create_file(state: AppState, dir: &DirDto, data: &DownloadedFile) -
         .fail();
     }
 
-    if file_dto.is_image {
+    if file_dto.file_type == FileType::Image {
         let data_copy = data.clone();
 
         // Process image in blocking task to avoid blocking the async runtime
@@ -354,7 +354,7 @@ pub async fn create_remote_file(
 
 fn cleanup_temp_uploads(data: &DownloadedFile, file: Option<&FileDto>) -> Result<()> {
     if let Some(file) = file {
-        if file.is_image {
+        if file.file_type == FileType::Image {
             // Cleanup versions
             if let Some(versions) = &file.img_versions {
                 let mut errors: Vec<String> = Vec::new();
