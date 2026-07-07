@@ -51,7 +51,7 @@ File:
 - id
 - org_id
 - dir_id
-- file_type (File, Image, Video, Note)
+- file_type (file, image, video, note)
 - name
 - filename
 - content_type
@@ -64,11 +64,7 @@ File:
 
 Note:
 - id
-- org_id
-- dir_id
 - file_id
 - content
 - created_at
-- updated_at
-- deleted_at
 
