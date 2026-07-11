@@ -24,7 +24,7 @@ use memo::pagination::Paginated;
 use memo::validators::flatten_errors;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct FileObject {
+pub struct FileRow {
     pub id: String,
     pub org_id: String,
     pub dir_id: String,
@@ -61,9 +61,9 @@ pub struct ListFilesParams {
     pub keyword: Option<String>,
 }
 
-impl From<FileDto> for FileObject {
+impl From<FileDto> for FileRow {
     fn from(file: FileDto) -> Self {
-        let img_versions = match file.img_versions {
+        let img_versions = match &file.img_versions {
             Some(versions) => {
                 let versions_str: String = versions
                     .iter()
@@ -76,6 +76,8 @@ impl From<FileDto> for FileObject {
             None => None,
         };
 
+        let is_image = if file.is_image() { 1 } else { 0 };
+
         Self {
             id: file.id,
             org_id: file.org_id,
@@ -85,7 +87,7 @@ impl From<FileDto> for FileObject {
             filename: file.filename,
             content_type: file.content_type,
             size: file.size,
-            is_image: if file.is_image { 1 } else { 0 },
+            is_image,
             img_versions,
             img_taken_at: file.img_taken_at,
             created_at: file.created_at,
@@ -94,8 +96,8 @@ impl From<FileDto> for FileObject {
     }
 }
 
-impl From<FileObject> for FileDto {
-    fn from(file: FileObject) -> Self {
+impl From<FileRow> for FileDto {
+    fn from(file: FileRow) -> Self {
         let img_versions = match file.img_versions {
             Some(versions_str) => {
                 let versions: Vec<ImgVersionDto> = versions_str
@@ -125,7 +127,6 @@ impl From<FileObject> for FileDto {
             filename: file.filename,
             content_type: file.content_type,
             size: file.size,
-            is_image: file.is_image == 1,
             img_versions,
             img_taken_at: file.img_taken_at,
             url: None,
@@ -165,7 +166,6 @@ impl FromTursoRow for FileDto {
             filename: row_text(row, 5)?,
             content_type: row_text(row, 6)?,
             size: row_integer(row, 7)?,
-            is_image: matches!(row_integer(row, 8)?, 1),
             img_versions,
             img_taken_at: opt_row_integer(row, 10)?,
             url: None,
@@ -308,7 +308,7 @@ impl FileRepo {
     }
 
     pub async fn create(&self, data: FileDto) -> Result<FileDto> {
-        let file: FileObject = data.clone().into();
+        let file: FileRow = data.clone().into();
 
         let query = r#"
             INSERT INTO files

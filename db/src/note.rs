@@ -107,7 +107,8 @@ impl NoteRepo {
         }
     }
 
-    pub async fn get_latest(&self, file_id: &str) -> Result<Option<NoteDto>> {
+    /// Get the latest note revision for a given file_id
+    pub async fn get_note(&self, file_id: &str) -> Result<Option<NoteDto>> {
         let query = r#"
             SELECT
                 id,

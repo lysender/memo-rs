@@ -290,7 +290,6 @@ pub async fn create_remote_file(
         content_type: data.content_type.clone(),
         size: data.size,
         url: None,
-        is_image: false,
         img_versions: None,
         img_taken_at: None,
         created_at: today,
@@ -391,8 +390,6 @@ fn cleanup_temp_uploads(data: &DownloadedFile, file: Option<&FileDto>) -> Result
 }
 
 fn init_file(dir: &DirDto, data: &DownloadedFile) -> Result<FileDto> {
-    let mut is_image = false;
-
     // Current design limits file_type to either File or Image
     // In the future, there will be a Video and Note
     let mut file_type = FileType::File;
@@ -401,7 +398,6 @@ fn init_file(dir: &DirDto, data: &DownloadedFile) -> Result<FileDto> {
     let content_type = get_content_type(&data.path).unwrap_or(data.content_type.clone());
 
     if ALLOWED_IMAGE_TYPES.contains(&content_type.as_str()) {
-        is_image = true;
         file_type = FileType::Image;
     }
 
@@ -418,7 +414,6 @@ fn init_file(dir: &DirDto, data: &DownloadedFile) -> Result<FileDto> {
         content_type,
         size: data.size,
         url: None,
-        is_image,
         img_versions: None,
         img_taken_at: None,
         created_at: today,
