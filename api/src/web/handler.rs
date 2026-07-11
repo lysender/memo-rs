@@ -235,10 +235,19 @@ pub async fn create_upload_url_handler(
     payload: CoreResult<Json<RemoteUploadDto>, JsonRejection>,
 ) -> Result<JsonResponse> {
     let permissions = vec![Permission::FilesCreate];
+
     ensure!(
         actor.has_permissions(&permissions),
         ForbiddenSnafu {
             msg: "Insufficient permissions"
+        }
+    );
+
+    // Do not allow uploads on notes
+    ensure!(
+        dir.dir_type != DirType::Notes,
+        ForbiddenSnafu {
+            msg: "Uploads are not allowed on notes"
         }
     );
 
