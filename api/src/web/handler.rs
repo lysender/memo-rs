@@ -193,10 +193,19 @@ pub async fn list_files_handler(
     query: Query<ListFilesParams>,
 ) -> Result<JsonResponse> {
     let permissions = vec![Permission::FilesList, Permission::FilesView];
+
     ensure!(
         actor.has_permissions(&permissions),
         ForbiddenSnafu {
             msg: "Insufficient permissions"
+        }
+    );
+
+    // Ensure we are at non-notes dir
+    ensure!(
+        dir.dir_type != DirType::Notes,
+        ForbiddenSnafu {
+            msg: "Files are not allowed on notes"
         }
     );
 
@@ -224,6 +233,7 @@ pub async fn list_files_handler(
         files.meta.per_page,
         files.meta.total_records,
     );
+
     Ok(JsonResponse::new(serde_json::to_string(&listing).unwrap()))
 }
 
@@ -267,10 +277,19 @@ pub async fn create_file_handler(
     payload: CoreResult<Json<SignedRemoteUploadDto>, JsonRejection>,
 ) -> Result<JsonResponse> {
     let permissions = vec![Permission::FilesCreate];
+
     ensure!(
         actor.has_permissions(&permissions),
         ForbiddenSnafu {
             msg: "Insufficient permissions"
+        }
+    );
+
+    // Ensure we are at non-notes dir
+    ensure!(
+        dir.dir_type != DirType::Notes,
+        ForbiddenSnafu {
+            msg: "Files are not allowed on notes"
         }
     );
 
@@ -348,10 +367,201 @@ pub async fn get_file_handler(
         .attach_url(&dir_meta, file)
         .await
         .context(StorageSnafu)?;
+
     Ok(JsonResponse::new(serde_json::to_string(&file_dto).unwrap()))
 }
 
 pub async fn delete_file_handler(
+    State(state): State<AppState>,
+    Extension(actor): Extension<Actor>,
+    Extension(dir): Extension<DirDto>,
+    Extension(file): Extension<FileDto>,
+) -> Result<JsonResponse> {
+    let permissions = vec![Permission::FilesDelete];
+    ensure!(
+        actor.has_permissions(&permissions),
+        ForbiddenSnafu {
+            msg: "Insufficient permissions"
+        }
+    );
+
+    let actor = actor.actor.expect("Actor must be present");
+    let dir_meta = DirMeta {
+        bucket_name: state.config.cloud.bucket.clone(),
+        org_id: actor.org_id,
+        dir_type: dir.dir_type.clone(),
+        dir_name: dir.name.clone(),
+    };
+
+    // Delete record
+    state.db.files.delete(&file.id).await.context(DbSnafu)?;
+    state.file_cache.remove(&file.id);
+
+    // Delete file(s) from storage
+    let storage_client = state.storage_client.clone();
+    storage_client
+        .delete(&dir_meta, &file)
+        .await
+        .context(StorageSnafu)?;
+
+    Ok(JsonResponse::with_status(
+        StatusCode::NO_CONTENT,
+        "".to_string(),
+    ))
+}
+
+pub async fn list_notes_handler(
+    State(state): State<AppState>,
+    Extension(actor): Extension<Actor>,
+    Extension(dir): Extension<DirDto>,
+    query: Query<ListFilesParams>,
+) -> Result<JsonResponse> {
+    let permissions = vec![Permission::FilesList, Permission::FilesView];
+
+    ensure!(
+        actor.has_permissions(&permissions),
+        ForbiddenSnafu {
+            msg: "Insufficient permissions"
+        }
+    );
+
+    // Ensure we are at notes dir
+    ensure!(
+        dir.dir_type == DirType::Notes,
+        ForbiddenSnafu {
+            msg: "Notes are not allowed on non-notes directories"
+        }
+    );
+
+    let files = state.db.files.list(&dir, &query).await.context(DbSnafu)?;
+    let storage_client = state.storage_client.clone();
+
+    let actor = actor.actor.expect("Actor must be present");
+
+    let dir_meta = DirMeta {
+        bucket_name: state.config.cloud.bucket.clone(),
+        org_id: actor.org_id,
+        dir_type: dir.dir_type,
+        dir_name: dir.name,
+    };
+
+    // Generate download urls for each files
+    let items = storage_client
+        .attach_urls(&dir_meta, files.data)
+        .await
+        .context(StorageSnafu)?;
+
+    let listing = Paginated::new(
+        items,
+        files.meta.page,
+        files.meta.per_page,
+        files.meta.total_records,
+    );
+
+    Ok(JsonResponse::new(serde_json::to_string(&listing).unwrap()))
+}
+
+pub async fn create_note_handler(
+    State(state): State<AppState>,
+    Extension(actor): Extension<Actor>,
+    Extension(dir): Extension<DirDto>,
+    payload: CoreResult<Json<SignedRemoteUploadDto>, JsonRejection>,
+) -> Result<JsonResponse> {
+    let permissions = vec![Permission::FilesCreate];
+
+    ensure!(
+        actor.has_permissions(&permissions),
+        ForbiddenSnafu {
+            msg: "Insufficient permissions"
+        }
+    );
+
+    // Ensure we are at notes dir
+    ensure!(
+        dir.dir_type == DirType::Notes,
+        ForbiddenSnafu {
+            msg: "Notes are not allowed on non-notes directories"
+        }
+    );
+
+    let data = payload.context(JsonRejectionSnafu {
+        msg: "Invalid request payload",
+    })?;
+
+    // Validate token
+    let upload_claims = verify_upload_token(&data.token, &state.config.jwt_secret)?;
+    let upload_claims_copy = upload_claims.clone();
+
+    let is_image = upload_claims.is_image();
+    let orig_filename = upload_claims.orig_filename;
+    let new_filename = upload_claims.new_filename;
+    let content_type = upload_claims.content_type;
+
+    let actor = actor.actor.expect("Actor must be present");
+    let dir_meta = DirMeta {
+        bucket_name: state.config.cloud.bucket.clone(),
+        org_id: actor.org_id,
+        dir_type: dir.dir_type.clone(),
+        dir_name: dir.name.clone(),
+    };
+
+    let storage_client = state.storage_client.clone();
+
+    let file = if is_image {
+        // Download file locally
+        let downloaded = state
+            .storage_client
+            .download(
+                &dir_meta,
+                ORIGINAL_PATH,
+                &orig_filename,
+                &new_filename,
+                &content_type,
+                &state.config.upload_dir,
+            )
+            .await
+            .context(StorageSnafu)?;
+
+        create_file_svc(state, &dir, &downloaded).await?
+    } else {
+        create_remote_file_svc(state, &dir, &upload_claims_copy).await?
+    };
+
+    let file = storage_client
+        .attach_url(&dir_meta, file)
+        .await
+        .context(StorageSnafu)?;
+
+    Ok(JsonResponse::with_status(
+        StatusCode::CREATED,
+        serde_json::to_string(&file).unwrap(),
+    ))
+}
+
+pub async fn get_note_handler(
+    State(state): State<AppState>,
+    Extension(actor): Extension<Actor>,
+    Extension(dir): Extension<DirDto>,
+    Extension(file): Extension<FileDto>,
+) -> Result<JsonResponse> {
+    let actor = actor.actor.expect("Actor must be present");
+    let dir_meta = DirMeta {
+        bucket_name: state.config.cloud.bucket.clone(),
+        org_id: actor.org_id,
+        dir_type: dir.dir_type.clone(),
+        dir_name: dir.name.clone(),
+    };
+
+    let storage_client = state.storage_client.clone();
+    // Extract dir from the middleware extension
+    let file_dto = storage_client
+        .attach_url(&dir_meta, file)
+        .await
+        .context(StorageSnafu)?;
+    Ok(JsonResponse::new(serde_json::to_string(&file_dto).unwrap()))
+}
+
+pub async fn delete_note_handler(
     State(state): State<AppState>,
     Extension(actor): Extension<Actor>,
     Extension(dir): Extension<DirDto>,
