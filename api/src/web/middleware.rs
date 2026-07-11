@@ -91,6 +91,7 @@ pub async fn dir_middleware(
     next: Next,
 ) -> Result<Response<Body>> {
     let permissions = vec![Permission::DirsList, Permission::DirsView];
+
     ensure!(
         actor.has_permissions(&permissions),
         ForbiddenSnafu {
@@ -208,6 +209,14 @@ pub async fn note_middleware(
         actor.has_permissions(&permissions),
         ForbiddenSnafu {
             msg: "Insufficient permissions"
+        }
+    );
+
+    // Do not allow non-notes access here
+    ensure!(
+        params.dir_type == "notes",
+        NotFoundSnafu {
+            msg: "File not found"
         }
     );
 

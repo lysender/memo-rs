@@ -13,7 +13,10 @@ use super::{
 };
 use crate::{
     state::AppState,
-    web::{handler::create_upload_url_handler, middleware::dir_type_middleware},
+    web::{
+        handler::create_upload_url_handler,
+        middleware::{dir_type_middleware, note_middleware},
+    },
 };
 
 pub fn all_routes(state: AppState) -> Router {
@@ -67,7 +70,7 @@ fn inner_dir_routes(state: AppState) -> Router<AppState> {
         )
         .route("/upload-url", post(create_upload_url_handler))
         .nest("/files", files_routes(state.clone()))
-        .nest("/notes", notes_routes(state.clone()))
+        .nest("/entries", note_entries_routes(state.clone()))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             dir_middleware,
@@ -82,7 +85,7 @@ fn files_routes(state: AppState) -> Router<AppState> {
         .with_state(state)
 }
 
-fn notes_routes(state: AppState) -> Router<AppState> {
+fn note_entries_routes(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/", get(list_files_handler).post(create_file_handler))
         .nest("/{file_id}", inner_note_routes(state.clone()))
@@ -104,7 +107,7 @@ fn inner_note_routes(state: AppState) -> Router<AppState> {
         .route("/", get(get_file_handler).delete(delete_file_handler))
         .layer(middleware::from_fn_with_state(
             state.clone(),
-            file_middleware,
+            note_middleware,
         ))
         .with_state(state)
 }
