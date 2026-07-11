@@ -210,6 +210,7 @@ pub async fn list_files_handler(
     );
 
     let files = state.db.files.list(&dir, &query).await.context(DbSnafu)?;
+
     let storage_client = state.storage_client.clone();
 
     let actor = actor.actor.expect("Actor must be present");
@@ -434,31 +435,8 @@ pub async fn list_notes_handler(
     );
 
     let files = state.db.files.list(&dir, &query).await.context(DbSnafu)?;
-    let storage_client = state.storage_client.clone();
 
-    let actor = actor.actor.expect("Actor must be present");
-
-    let dir_meta = DirMeta {
-        bucket_name: state.config.cloud.bucket.clone(),
-        org_id: actor.org_id,
-        dir_type: dir.dir_type,
-        dir_name: dir.name,
-    };
-
-    // Generate download urls for each files
-    let items = storage_client
-        .attach_urls(&dir_meta, files.data)
-        .await
-        .context(StorageSnafu)?;
-
-    let listing = Paginated::new(
-        items,
-        files.meta.page,
-        files.meta.per_page,
-        files.meta.total_records,
-    );
-
-    Ok(JsonResponse::new(serde_json::to_string(&listing).unwrap()))
+    Ok(JsonResponse::new(serde_json::to_string(&files).unwrap()))
 }
 
 pub async fn create_note_handler(
