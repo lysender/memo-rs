@@ -13,7 +13,7 @@ use crate::{
     error::{
         DbSnafu, ForbiddenSnafu, InsufficientAuthScopeSnafu, InvalidAuthTokenSnafu, NotFoundSnafu,
     },
-    oauth::authenticate_token,
+    oauth::authenticate_token_svc,
     state::AppState,
     web::params::{DirParams, DirTypeParams, FileParams},
 };
@@ -43,7 +43,7 @@ pub async fn auth_middleware(
         ensure!(auth_header.starts_with("Bearer "), InvalidAuthTokenSnafu);
         let token = auth_header.replace("Bearer ", "");
 
-        actor = authenticate_token(&state, &token).await?;
+        actor = authenticate_token_svc(&state, &token).await?;
     }
 
     // Forward to the next middleware/handler passing the actor information

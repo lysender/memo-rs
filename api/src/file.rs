@@ -49,7 +49,7 @@ impl Default for PhotoExif {
     }
 }
 
-pub async fn generate_upload_url(
+pub async fn generate_upload_url_svc(
     state: AppState,
     dir: &DirDto,
     data: &RemoteUploadDto,
@@ -128,7 +128,11 @@ pub async fn generate_upload_url(
 
 /// Creates a file record by downloading the file first, capture metadata
 /// create image versions, then upload to cloud storage, and finally save to database
-pub async fn create_file(state: AppState, dir: &DirDto, data: &DownloadedFile) -> Result<FileDto> {
+pub async fn create_file_svc(
+    state: AppState,
+    dir: &DirDto,
+    data: &DownloadedFile,
+) -> Result<FileDto> {
     let dir_meta = DirMeta {
         bucket_name: state.config.cloud.bucket,
         org_id: dir.org_id.clone(),
@@ -272,7 +276,7 @@ pub async fn create_file(state: AppState, dir: &DirDto, data: &DownloadedFile) -
 /// Creates a file record relying completely from upload metadata
 /// Assumes that the file has been uploaded already
 /// Applicable to non-image files
-pub async fn create_remote_file(
+pub async fn create_remote_file_svc(
     state: AppState,
     dir: &DirDto,
     data: &FileUploadClaims,

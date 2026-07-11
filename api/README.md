@@ -36,6 +36,16 @@ Uses cases:
   - Image dimension for each version
   - Date picture is taken
 
+## Notes
+
+Notes are treated as files although there are actually stored in the database.
+Every time you modify a note, a new revision is created.
+
+- Create note: creates a file and a note record
+- Read note: returns the latest note revision
+- Update note: creates a new note record and updates the file record with updated_at
+- Delete note: deletes both the note revisions and the file entry
+
 ## Models
 
 Dir:

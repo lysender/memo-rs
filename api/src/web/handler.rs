@@ -10,12 +10,12 @@ use serde::Serialize;
 use snafu::{OptionExt, ResultExt, ensure};
 
 use crate::{
-    dir::{create_dir, delete_dir, update_dir},
+    dir::{create_dir_svc, delete_dir_svc, update_dir_svc},
     error::{
         DbSnafu, ErrorResponse, ForbiddenSnafu, JsonRejectionSnafu, Result, StorageSnafu,
         WhateverSnafu,
     },
-    file::{create_file, create_remote_file, generate_upload_url},
+    file::{create_file_svc, create_remote_file_svc, generate_upload_url_svc},
     health::{check_liveness, check_readiness},
     state::AppState,
     token::verify_upload_token,
@@ -118,7 +118,7 @@ pub async fn create_dir_handler(
 
     let actor = actor.actor.expect("Actor must be present");
 
-    let dir = create_dir(&state, &actor.org_id, &dir_type, &data).await?;
+    let dir = create_dir_svc(&state, &actor.org_id, &dir_type, &data).await?;
 
     Ok(JsonResponse::with_status(
         StatusCode::CREATED,
@@ -148,7 +148,7 @@ pub async fn update_dir_handler(
         msg: "Invalid request payload",
     })?;
 
-    let updated = update_dir(&state, &dir.id, &data).await?;
+    let updated = update_dir_svc(&state, &dir.id, &data).await?;
 
     // Either return the updated dir or the original one
     match updated {
@@ -179,7 +179,7 @@ pub async fn delete_dir_handler(
         }
     );
 
-    delete_dir(&state, &dir.id).await?;
+    delete_dir_svc(&state, &dir.id).await?;
     Ok(JsonResponse::with_status(
         StatusCode::NO_CONTENT,
         "".to_string(),
@@ -246,7 +246,7 @@ pub async fn create_upload_url_handler(
         msg: "Invalid request payload",
     })?;
 
-    let dto = generate_upload_url(state, &dir, &data.0).await?;
+    let dto = generate_upload_url_svc(state, &dir, &data.0).await?;
 
     Ok(JsonResponse::new(serde_json::to_string(&dto).unwrap()))
 }
@@ -303,9 +303,9 @@ pub async fn create_file_handler(
             .await
             .context(StorageSnafu)?;
 
-        create_file(state, &dir, &downloaded).await?
+        create_file_svc(state, &dir, &downloaded).await?
     } else {
-        create_remote_file(state, &dir, &upload_claims_copy).await?
+        create_remote_file_svc(state, &dir, &upload_claims_copy).await?
     };
 
     let file = storage_client
