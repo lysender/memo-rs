@@ -68,6 +68,10 @@ pub struct FileDto {
 }
 
 impl FileDto {
+    pub fn is_regular_file(&self) -> bool {
+        self.file_type == FileType::Image
+    }
+
     pub fn is_image(&self) -> bool {
         self.file_type == FileType::Image
     }
