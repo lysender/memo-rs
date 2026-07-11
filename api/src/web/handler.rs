@@ -17,6 +17,7 @@ use crate::{
     },
     file::{create_file_svc, create_remote_file_svc, generate_upload_url_svc},
     health::{check_liveness, check_readiness},
+    note::create_note_svc,
     state::AppState,
     token::verify_upload_token,
     web::response::JsonResponse,
@@ -26,6 +27,7 @@ use db::file::ListFilesParams;
 use memo::{
     dir::{DirDto, DirMeta, DirType},
     file::{FileDto, ORIGINAL_PATH, RemoteUploadDto, SignedRemoteUploadDto},
+    note::CreateNoteDto,
     pagination::Paginated,
 };
 use yaas::{actor::Actor, role::Permission};
@@ -443,7 +445,7 @@ pub async fn create_note_handler(
     State(state): State<AppState>,
     Extension(actor): Extension<Actor>,
     Extension(dir): Extension<DirDto>,
-    payload: CoreResult<Json<SignedRemoteUploadDto>, JsonRejection>,
+    payload: CoreResult<Json<CreateNoteDto>, JsonRejection>,
 ) -> Result<JsonResponse> {
     let permissions = vec![Permission::FilesCreate];
 
@@ -466,49 +468,7 @@ pub async fn create_note_handler(
         msg: "Invalid request payload",
     })?;
 
-    // Validate token
-    let upload_claims = verify_upload_token(&data.token, &state.config.jwt_secret)?;
-    let upload_claims_copy = upload_claims.clone();
-
-    let is_image = upload_claims.is_image();
-    let orig_filename = upload_claims.orig_filename;
-    let new_filename = upload_claims.new_filename;
-    let content_type = upload_claims.content_type;
-
-    let actor = actor.actor.expect("Actor must be present");
-    let dir_meta = DirMeta {
-        bucket_name: state.config.cloud.bucket.clone(),
-        org_id: actor.org_id,
-        dir_type: dir.dir_type.clone(),
-        dir_name: dir.name.clone(),
-    };
-
-    let storage_client = state.storage_client.clone();
-
-    let file = if is_image {
-        // Download file locally
-        let downloaded = state
-            .storage_client
-            .download(
-                &dir_meta,
-                ORIGINAL_PATH,
-                &orig_filename,
-                &new_filename,
-                &content_type,
-                &state.config.upload_dir,
-            )
-            .await
-            .context(StorageSnafu)?;
-
-        create_file_svc(state, &dir, &downloaded).await?
-    } else {
-        create_remote_file_svc(state, &dir, &upload_claims_copy).await?
-    };
-
-    let file = storage_client
-        .attach_url(&dir_meta, file)
-        .await
-        .context(StorageSnafu)?;
+    let file = create_note_svc(&state, &dir, &data).await?;
 
     Ok(JsonResponse::with_status(
         StatusCode::CREATED,

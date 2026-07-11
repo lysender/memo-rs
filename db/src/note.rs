@@ -48,14 +48,14 @@ impl NoteRepo {
                 id,
                 file_id,
                 content,
-                created_at,
+                created_at
             )
             VALUES
             (
                 :id,
                 :file_id,
                 :content,
-                :created_at,
+                :created_at
             )
         "#;
 
@@ -114,7 +114,7 @@ impl NoteRepo {
                 id,
                 file_id,
                 content,
-                created_at,
+                created_at
             FROM notes
             WHERE file_id = :file_id
             ORDER BY id DESC
