@@ -34,9 +34,13 @@ pub async fn create_note_svc(
         .count_by_dir(&dir.id)
         .await
         .context(DbSnafu)?;
-    ensure!(count < MAX_FILES as i64, ValidationSnafu {
-        msg: "Directory already has maximum files".to_string(),
-    });
+
+    ensure!(
+        count < MAX_FILES as i64,
+        ValidationSnafu {
+            msg: "Directory already has maximum files".to_string(),
+        }
+    );
 
     let existing = state
         .db
