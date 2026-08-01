@@ -97,6 +97,6 @@ Note:
 - id
 - file_id
 - content
-- revision ('latest' or the previous notes.id)
+- next_revision ('latest' or the next revision's notes.id)
 - created_at
 
