@@ -97,4 +97,6 @@ Note:
 - id
 - file_id
 - content
+- revised_at (null: latest revision, not null: previous revision)
 - created_at
+
