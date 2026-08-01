@@ -10,6 +10,12 @@ pub struct CreateNoteDto {
     pub content: String,
 }
 
+#[derive(Debug, Clone, Deserialize, Validate)]
+pub struct UpdateNoteDto {
+    #[validate(length(min = 2, max = 10_000))]
+    pub content: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NoteDto {
     pub id: String,

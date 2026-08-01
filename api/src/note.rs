@@ -99,3 +99,16 @@ pub async fn create_note_svc(
 pub async fn get_note_svc(state: &AppState, file_id: &str) -> Result<Option<NoteDto>> {
     state.db.notes.get_note(file_id).await.context(DbSnafu)
 }
+
+pub async fn update_note_svc(
+    state: &AppState,
+    file_id: String,
+    content: String,
+) -> Result<NoteDto> {
+    state
+        .db
+        .notes
+        .create_revision(file_id, content)
+        .await
+        .context(DbSnafu)
+}

@@ -16,7 +16,7 @@ use crate::{
     web::{
         handler::{
             create_note_handler, create_upload_url_handler, delete_note_handler, get_note_handler,
-            list_notes_handler,
+            list_notes_handler, update_note_handler,
         },
         middleware::{dir_type_middleware, note_middleware},
     },
@@ -107,7 +107,12 @@ fn inner_file_routes(state: AppState) -> Router<AppState> {
 
 fn inner_note_routes(state: AppState) -> Router<AppState> {
     Router::new()
-        .route("/", get(get_note_handler).delete(delete_note_handler))
+        .route(
+            "/",
+            get(get_note_handler)
+                .patch(update_note_handler)
+                .delete(delete_note_handler),
+        )
         .layer(middleware::from_fn_with_state(
             state.clone(),
             note_middleware,

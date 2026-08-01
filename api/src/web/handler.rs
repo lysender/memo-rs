@@ -13,12 +13,12 @@ use crate::{
     Error,
     dir::{create_dir_svc, delete_dir_svc, update_dir_svc},
     error::{
-        DbSnafu, ErrorResponse, ForbiddenSnafu, JsonRejectionSnafu, Result, StorageSnafu,
-        WhateverSnafu,
+        DbSnafu, ErrorResponse, ForbiddenSnafu, JsonRejectionSnafu, NotFoundSnafu, Result,
+        StorageSnafu, WhateverSnafu,
     },
     file::{create_file_svc, create_remote_file_svc, generate_upload_url_svc},
     health::{check_liveness, check_readiness},
-    note::{create_note_svc, get_note_svc},
+    note::{create_note_svc, get_note_svc, update_note_svc},
     state::AppState,
     token::verify_upload_token,
     web::response::JsonResponse,
@@ -28,7 +28,7 @@ use db::file::ListFilesParams;
 use memo::{
     dir::{DirDto, DirMeta, DirType},
     file::{FileDto, ORIGINAL_PATH, RemoteUploadDto, SignedRemoteUploadDto},
-    note::CreateNoteDto,
+    note::{CreateNoteDto, UpdateNoteDto},
     pagination::Paginated,
 };
 use yaas::{actor::Actor, role::Permission};
@@ -482,12 +482,39 @@ pub async fn get_note_handler(
     Extension(file): Extension<FileDto>,
 ) -> Result<JsonResponse> {
     let opt_note = get_note_svc(&state, &file.id).await?;
-    match opt_note {
-        Some(note) => Ok(JsonResponse::new(serde_json::to_string(&note).unwrap())),
-        None => Err(Error::NotFound {
-            msg: "Note not found".to_string(),
-        }),
-    }
+    let note = opt_note.context(NotFoundSnafu {
+        msg: "Note not found",
+    })?;
+
+    Ok(JsonResponse::new(serde_json::to_string(&note).unwrap()))
+}
+
+pub async fn update_note_handler(
+    State(state): State<AppState>,
+    Extension(actor): Extension<Actor>,
+    Extension(file): Extension<FileDto>,
+    payload: CoreResult<Json<UpdateNoteDto>, JsonRejection>,
+) -> Result<JsonResponse> {
+    let permissions = vec![Permission::FilesEdit];
+    ensure!(
+        actor.has_permissions(&permissions),
+        ForbiddenSnafu {
+            msg: "Insufficient permissions"
+        }
+    );
+
+    let data = payload.context(JsonRejectionSnafu {
+        msg: "Invalid request payload",
+    })?;
+
+    let opt_note = get_note_svc(&state, &file.id).await?;
+    let _ = opt_note.context(NotFoundSnafu {
+        msg: "Note not found",
+    })?;
+
+    let updated = update_note_svc(&state, file.id.clone(), data.content.clone()).await?;
+
+    Ok(JsonResponse::new(serde_json::to_string(&updated).unwrap()))
 }
 
 pub async fn delete_note_handler(
