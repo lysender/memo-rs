@@ -15,7 +15,7 @@ pub struct NoteDto {
     pub id: String,
     pub file_id: String,
     pub content: String,
-    pub revision: String,
+    pub next_revision: String,
     pub created_at: i64,
 }
 

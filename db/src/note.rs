@@ -8,7 +8,7 @@ use tokio::time::sleep;
 use turso::Row;
 
 use crate::db_pool::DbPool;
-use crate::error::{DbPrepareSnafu, DbStatementSnafu};
+use crate::error::{DbPrepareSnafu, DbStatementSnafu, DbTransactionSnafu};
 use crate::turso_decode::{FromTursoRow, collect_row, row_integer, row_text};
 use crate::turso_params::{integer_param, new_query_params, text_param};
 use crate::{Error, Result};
@@ -22,7 +22,7 @@ impl FromTursoRow for NoteDto {
             id: row_text(row, 0)?,
             file_id: row_text(row, 1)?,
             content: row_text(row, 2)?,
-            revision: row_text(row, 3)?,
+            next_revision: row_text(row, 3)?,
             created_at: row_integer(row, 4)?,
         })
     }
@@ -42,17 +42,23 @@ impl NoteRepo {
             id: generate_prefixed_id(IdPrefix::Note),
             file_id,
             content,
-            revision: LATEST_REVISION.to_string(),
+            next_revision: LATEST_REVISION.to_string(),
             created_at: chrono::Utc::now().timestamp(),
         };
 
-        let query = r#"
+        let update_query = r#"
+            UPDATE notes
+            SET next_revision = :new_revision_id
+            WHERE file_id = :file_id AND next_revision = :latest_revision
+        "#;
+
+        let insert_query = r#"
             INSERT INTO notes
             (
                 id,
                 file_id,
                 content,
-                revision,
+                next_revision,
                 created_at
             )
             VALUES
@@ -60,21 +66,59 @@ impl NoteRepo {
                 :id,
                 :file_id,
                 :content,
-                :revision,
+                :next_revision,
                 :created_at
             )
         "#;
 
-        let mut q_params = new_query_params();
-        q_params.push(text_param(":id", note.id.clone()));
-        q_params.push(text_param(":file_id", note.file_id.clone()));
-        q_params.push(text_param(":content", note.content.clone()));
-        q_params.push(text_param(":revision", note.content.clone()));
-        q_params.push(integer_param(":created_at", note.created_at));
+        let mut update_params = new_query_params();
+        update_params.push(text_param(":new_revision_id", note.id.clone()));
+        update_params.push(text_param(":file_id", note.file_id.clone()));
+        update_params.push(text_param(":latest_revision", LATEST_REVISION.to_string()));
+
+        let mut insert_params = new_query_params();
+        insert_params.push(text_param(":id", note.id.clone()));
+        insert_params.push(text_param(":file_id", note.file_id.clone()));
+        insert_params.push(text_param(":content", note.content.clone()));
+        insert_params.push(text_param(":next_revision", note.id.clone()));
+        insert_params.push(integer_param(":created_at", note.created_at));
 
         let conn = self.db_pool.acquire().await?;
-        let mut stmt = conn.prepare(query).await.context(DbPrepareSnafu)?;
-        stmt.execute(q_params).await.context(DbStatementSnafu)?;
+
+        conn.execute("BEGIN CONCURRENT", ())
+            .await
+            .context(DbTransactionSnafu)?;
+
+        let operation: Result<()> = async {
+            let mut update_stmt = conn.prepare(update_query).await.context(DbPrepareSnafu)?;
+            update_stmt
+                .execute(update_params)
+                .await
+                .context(DbStatementSnafu)?;
+
+            let mut insert_stmt = conn.prepare(insert_query).await.context(DbPrepareSnafu)?;
+            insert_stmt
+                .execute(insert_params)
+                .await
+                .context(DbStatementSnafu)?;
+
+            Ok(())
+        }
+        .await;
+
+        if let Err(error) = operation {
+            conn.execute("ROLLBACK", ())
+                .await
+                .context(DbTransactionSnafu)?;
+            return Err(error);
+        }
+
+        if let Err(error) = conn.execute("COMMIT", ()).await.context(DbTransactionSnafu) {
+            conn.execute("ROLLBACK", ())
+                .await
+                .context(DbTransactionSnafu)?;
+            return Err(error);
+        }
 
         Ok(note)
     }
@@ -121,10 +165,10 @@ impl NoteRepo {
                 id,
                 file_id,
                 content,
-                revision,
+                next_revision,
                 created_at
             FROM notes
-            WHERE file_id = :file_id AND revision = :revision
+            WHERE file_id = :file_id AND next_revision = :next_revision
             ORDER BY id DESC
             LIMIT 1
         "#
@@ -132,12 +176,32 @@ impl NoteRepo {
 
         let mut q_params = new_query_params();
         q_params.push(text_param(":file_id", file_id.to_owned()));
-        q_params.push(text_param(":revision", LATEST_REVISION.to_string()));
+        q_params.push(text_param(":next_revision", LATEST_REVISION.to_string()));
 
         let conn = self.db_pool.acquire().await?;
         let mut stmt = conn.prepare(query).await.context(DbPrepareSnafu)?;
         let row_result = stmt.query_row(q_params).await;
         let dto: Option<NoteDto> = collect_row(row_result)?;
         Ok(dto)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    fn temp_db_path() -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "memo-note-revision-{}.db",
+            generate_prefixed_id(IdPrefix::Any)
+        ))
+    }
+
+    fn cleanup_db_files(path: &std::path::Path) {
+        for suffix in ["", "-wal", "-shm", "-log"] {
+            let _ = std::fs::remove_file(format!("{}{suffix}", path.display()));
+        }
     }
 }
