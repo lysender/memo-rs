@@ -48,6 +48,7 @@ pub async fn create_note_svc(
         .find_by_name(&dir.id, &data.name)
         .await
         .context(DbSnafu)?;
+
     ensure!(
         existing.is_none(),
         ValidationSnafu {
@@ -56,6 +57,7 @@ pub async fn create_note_svc(
     );
 
     let now = chrono::Utc::now().timestamp();
+
     let file = FileDto {
         id: generate_prefixed_id(IdPrefix::File),
         org_id: dir.org_id.clone(),
