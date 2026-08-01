@@ -14,13 +14,16 @@ use crate::turso_params::{integer_param, new_query_params, text_param};
 use crate::{Error, Result};
 use memo::note::NoteDto;
 
+const LATEST_REVISION: &'static str = "latest";
+
 impl FromTursoRow for NoteDto {
     fn from_row(row: &Row) -> Result<Self> {
         Ok(Self {
             id: row_text(row, 0)?,
             file_id: row_text(row, 1)?,
             content: row_text(row, 2)?,
-            created_at: row_integer(row, 3)?,
+            revision: row_text(row, 3)?,
+            created_at: row_integer(row, 4)?,
         })
     }
 }
@@ -39,6 +42,7 @@ impl NoteRepo {
             id: generate_prefixed_id(IdPrefix::Note),
             file_id,
             content,
+            revision: LATEST_REVISION.to_string(),
             created_at: chrono::Utc::now().timestamp(),
         };
 
@@ -48,6 +52,7 @@ impl NoteRepo {
                 id,
                 file_id,
                 content,
+                revision,
                 created_at
             )
             VALUES
@@ -55,6 +60,7 @@ impl NoteRepo {
                 :id,
                 :file_id,
                 :content,
+                :revision,
                 :created_at
             )
         "#;
@@ -63,6 +69,7 @@ impl NoteRepo {
         q_params.push(text_param(":id", note.id.clone()));
         q_params.push(text_param(":file_id", note.file_id.clone()));
         q_params.push(text_param(":content", note.content.clone()));
+        q_params.push(text_param(":revision", note.content.clone()));
         q_params.push(integer_param(":created_at", note.created_at));
 
         let conn = self.db_pool.acquire().await?;
@@ -114,9 +121,10 @@ impl NoteRepo {
                 id,
                 file_id,
                 content,
+                revision,
                 created_at
             FROM notes
-            WHERE file_id = :file_id
+            WHERE file_id = :file_id AND revision = :revision
             ORDER BY id DESC
             LIMIT 1
         "#
@@ -124,6 +132,7 @@ impl NoteRepo {
 
         let mut q_params = new_query_params();
         q_params.push(text_param(":file_id", file_id.to_owned()));
+        q_params.push(text_param(":revision", LATEST_REVISION.to_string()));
 
         let conn = self.db_pool.acquire().await?;
         let mut stmt = conn.prepare(query).await.context(DbPrepareSnafu)?;
