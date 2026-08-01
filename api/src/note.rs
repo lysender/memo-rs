@@ -88,6 +88,7 @@ pub async fn create_note_svc(
         .await
         .context(DbSnafu)
     {
+        // Delete the file entry since we cannot insert a note revision.
         state.db.files.delete(&file.id).await.context(DbSnafu)?;
         return Err(error);
     }
