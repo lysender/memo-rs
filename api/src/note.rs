@@ -10,7 +10,7 @@ use db::file::MAX_FILES;
 use memo::{
     dir::DirDto,
     file::{FileDto, FileType},
-    note::CreateNoteDto,
+    note::{CreateNoteDto, NoteDto},
     utils::{IdPrefix, generate_prefixed_id, truncate_string},
     validators::flatten_errors,
 };
@@ -94,4 +94,8 @@ pub async fn create_note_svc(
     }
 
     Ok(file)
+}
+
+pub async fn get_note_svc(state: &AppState, file_id: &str) -> Result<Option<NoteDto>> {
+    state.db.notes.get_note(file_id).await.context(DbSnafu)
 }

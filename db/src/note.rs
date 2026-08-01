@@ -80,7 +80,7 @@ impl NoteRepo {
         insert_params.push(text_param(":id", note.id.clone()));
         insert_params.push(text_param(":file_id", note.file_id.clone()));
         insert_params.push(text_param(":content", note.content.clone()));
-        insert_params.push(text_param(":next_revision", note.id.clone()));
+        insert_params.push(text_param(":next_revision", LATEST_REVISION.to_string()));
         insert_params.push(integer_param(":created_at", note.created_at));
 
         let conn = self.db_pool.acquire().await?;

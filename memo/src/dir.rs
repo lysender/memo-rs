@@ -16,6 +16,7 @@ impl TryFrom<&str> for DirType {
             "photos" => Ok(Self::Photos),
             "videos" => Ok(Self::Videos),
             "documents" => Ok(Self::Documents),
+            "notes" => Ok(Self::Notes),
             _ => Err(format!("Invalid dir type: {value}")),
         }
     }

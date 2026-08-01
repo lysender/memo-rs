@@ -10,6 +10,7 @@ use serde::Serialize;
 use snafu::{OptionExt, ResultExt, ensure};
 
 use crate::{
+    Error,
     dir::{create_dir_svc, delete_dir_svc, update_dir_svc},
     error::{
         DbSnafu, ErrorResponse, ForbiddenSnafu, JsonRejectionSnafu, Result, StorageSnafu,
@@ -17,7 +18,7 @@ use crate::{
     },
     file::{create_file_svc, create_remote_file_svc, generate_upload_url_svc},
     health::{check_liveness, check_readiness},
-    note::create_note_svc,
+    note::{create_note_svc, get_note_svc},
     state::AppState,
     token::verify_upload_token,
     web::response::JsonResponse,
@@ -478,25 +479,15 @@ pub async fn create_note_handler(
 
 pub async fn get_note_handler(
     State(state): State<AppState>,
-    Extension(actor): Extension<Actor>,
-    Extension(dir): Extension<DirDto>,
     Extension(file): Extension<FileDto>,
 ) -> Result<JsonResponse> {
-    let actor = actor.actor.expect("Actor must be present");
-    let dir_meta = DirMeta {
-        bucket_name: state.config.cloud.bucket.clone(),
-        org_id: actor.org_id,
-        dir_type: dir.dir_type.clone(),
-        dir_name: dir.name.clone(),
-    };
-
-    let storage_client = state.storage_client.clone();
-    // Extract dir from the middleware extension
-    let file_dto = storage_client
-        .attach_url(&dir_meta, file)
-        .await
-        .context(StorageSnafu)?;
-    Ok(JsonResponse::new(serde_json::to_string(&file_dto).unwrap()))
+    let opt_note = get_note_svc(&state, &file.id).await?;
+    match opt_note {
+        Some(note) => Ok(JsonResponse::new(serde_json::to_string(&note).unwrap())),
+        None => Err(Error::NotFound {
+            msg: "Note not found".to_string(),
+        }),
+    }
 }
 
 pub async fn delete_note_handler(
