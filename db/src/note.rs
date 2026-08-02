@@ -12,7 +12,7 @@ use crate::turso_decode::{FromTursoRow, collect_row, row_integer, row_text};
 use crate::turso_params::{integer_param, new_query_params, text_param};
 use crate::{Error, Result};
 use memo::note::NoteDto;
-use memo::utils::{IdPrefix, generate_prefixed_id, str_checksum};
+use memo::utils::{IdPrefix, generate_prefixed_id};
 
 const LATEST_REVISION: &'static str = "latest";
 
@@ -38,13 +38,16 @@ impl NoteRepo {
         Self { db_pool }
     }
 
-    pub async fn create_revision(&self, file_id: String, content: String) -> Result<NoteDto> {
-        let checksum = str_checksum(&content);
-
+    pub async fn create_revision(
+        &self,
+        file_id: String,
+        cipher_content: String,
+        checksum: String,
+    ) -> Result<NoteDto> {
         let note = NoteDto {
             id: generate_prefixed_id(IdPrefix::Note),
             file_id,
-            content,
+            content: cipher_content,
             next_revision: LATEST_REVISION.to_string(),
             checksum: checksum.clone(),
             created_at: chrono::Utc::now().timestamp(),
@@ -133,7 +136,8 @@ impl NoteRepo {
     pub async fn retry_create_revision(
         &self,
         file_id: String,
-        content: String,
+        cipher_content: String,
+        checksum: String,
         max_retries: usize,
     ) -> Result<NoteDto> {
         let mut attempts = 0;
@@ -141,7 +145,10 @@ impl NoteRepo {
         let max_delay = Duration::from_secs(2);
 
         loop {
-            match self.create_revision(file_id.clone(), content.clone()).await {
+            match self
+                .create_revision(file_id.clone(), cipher_content.clone(), checksum.clone())
+                .await
+            {
                 Ok(result) => return Ok(result),
                 Err(Error::DbStatement { source }) => match source {
                     turso::Error::Busy(..) => {

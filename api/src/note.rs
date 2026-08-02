@@ -3,9 +3,10 @@ use validator::Validate;
 
 use crate::{
     Result,
-    error::{DbSnafu, NotFoundSnafu, ValidationSnafu},
+    error::{CipherSnafu, DbSnafu, NotFoundSnafu, ValidationSnafu},
     state::AppState,
 };
+use cipher::encrypt;
 use db::file::MAX_FILES;
 use memo::{
     dir::DirDto,
@@ -81,10 +82,16 @@ pub async fn create_note_svc(
         .await
         .context(DbSnafu)?;
 
+    let checksum = str_checksum(&data.content);
+
+    // Encrypt content before storing
+    let cipher_content =
+        encrypt(&state.config.notes_master_key, &data.content).context(CipherSnafu)?;
+
     if let Err(error) = state
         .db
         .notes
-        .retry_create_revision(file.id.clone(), data.content.clone(), 5)
+        .retry_create_revision(file.id.clone(), cipher_content, checksum, 5)
         .await
         .context(DbSnafu)
     {
@@ -117,11 +124,16 @@ pub async fn update_note_svc(
         return Ok(note);
     }
 
+    let checksum = str_checksum(&content);
+
+    // Encrypt content before storing
+    let cipher_content = encrypt(&state.config.notes_master_key, &content).context(CipherSnafu)?;
+
     // Otherwise, create a new revision
     state
         .db
         .notes
-        .create_revision(file_id, content)
+        .retry_create_revision(file_id, cipher_content, checksum, 5)
         .await
         .context(DbSnafu)
 }
