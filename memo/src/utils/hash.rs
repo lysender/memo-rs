@@ -13,4 +13,22 @@ pub fn str_checksum(input: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn checksum_matches_known_value() {
+        assert_eq!(
+            str_checksum("hello world"),
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        );
+    }
+
+    #[test]
+    fn checksum_of_empty_string_matches_known_value() {
+        assert_eq!(
+            str_checksum(""),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+    }
+}
