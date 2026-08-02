@@ -95,7 +95,7 @@ impl Config {
         );
 
         ensure!(
-            config.notes_master_key.len() < 20,
+            config.notes_master_key.len() > 20,
             ConfigSnafu {
                 msg: "Notes master key is too short.".to_string()
             }

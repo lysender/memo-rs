@@ -1,7 +1,7 @@
 use base64::prelude::*;
 use chacha20poly1305::{
-    Key, XChaCha20Poly1305, XNonce,
-    aead::{Aead, AeadCore, KeyInit, OsRng},
+    ChaCha20Poly1305, Nonce,
+    aead::{Aead, AeadCore, Generate, Key, KeyInit},
 };
 use snafu::{OptionExt, ResultExt, ensure};
 
@@ -16,20 +16,20 @@ const DEFAULT_ENC_METHOD: &'static str = "xch";
 /// Result format: enc_method:key_nonce:key_data|enc_method:input_nonce:input_data
 pub fn encrypt(key: &str, data: &str) -> Result<String> {
     // Create a random key and encrypt it with the main key
-    let random_key = XChaCha20Poly1305::generate_key(OsRng);
-    let cipher_key = xchacha20_encrypt(key.as_bytes(), &random_key)?;
+    let random_key = Key::<ChaCha20Poly1305>::generate();
+    let cipher_key = chacha20_encrypt(key.as_bytes(), &random_key)?;
 
     // Now that we have a random key encrypted, encypt the data with it
-    let cipher_data = xchacha20_encrypt(&random_key, data.as_bytes())?;
+    let cipher_data = chacha20_encrypt(&random_key, data.as_bytes())?;
     Ok(format!("{}|{}", cipher_key, cipher_data))
 }
 
 /// Encrypts data with the provided key
 /// Result format: enc_method:nonce:data
-fn xchacha20_encrypt(key: &[u8], data: &[u8]) -> Result<String> {
-    let kb = Key::from_slice(key);
-    let c = XChaCha20Poly1305::new(&kb);
-    let nonce = XChaCha20Poly1305::generate_nonce(&mut OsRng);
+fn chacha20_encrypt(key: &[u8], data: &[u8]) -> Result<String> {
+    let kb = Key::<ChaCha20Poly1305>::from(key);
+    let c = ChaCha20Poly1305::new(&kb);
+    let nonce = Nonce::generate();
     match c.encrypt(&nonce, data) {
         Ok(res) => {
             let bres = BASE64_STANDARD.encode(res);
