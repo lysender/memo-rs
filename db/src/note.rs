@@ -41,7 +41,7 @@ impl NoteRepo {
 
     pub async fn create_revision(&self, file_id: String, content: String) -> Result<NoteDto> {
         let hash = Sha256::digest(content.as_bytes());
-        let hash_str = format!("{:x}", hash);
+        let hash_str = format!("{:x}", hash.as_slice());
 
         let note = NoteDto {
             id: generate_prefixed_id(IdPrefix::Note),

@@ -3168,6 +3168,7 @@ name = "memo"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "sha2 0.11.0",
  "snafu",
  "uuid",
  "validator",
