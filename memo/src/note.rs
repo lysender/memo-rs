@@ -22,7 +22,28 @@ pub struct NoteDto {
     pub file_id: String,
     pub content: String,
     pub next_revision: String,
+    pub checksum: String,
     pub created_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NoteContentDto {
+    pub id: String,
+    pub file_id: String,
+    pub content: String,
+    pub created_at: i64,
+}
+
+// Add a from conversion from NoteDto to NoteContentDto
+impl From<NoteDto> for NoteContentDto {
+    fn from(note: NoteDto) -> Self {
+        NoteContentDto {
+            id: note.id,
+            file_id: note.file_id,
+            content: note.content,
+            created_at: note.created_at,
+        }
+    }
 }
 
 #[cfg(test)]

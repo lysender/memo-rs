@@ -2,7 +2,7 @@ use std::cmp::min;
 use std::sync::Arc;
 use std::time::Duration;
 
-use memo::utils::{IdPrefix, generate_prefixed_id};
+use sha2::{Digest, Sha256};
 use snafu::ResultExt;
 use tokio::time::sleep;
 use turso::Row;
@@ -13,6 +13,7 @@ use crate::turso_decode::{FromTursoRow, collect_row, row_integer, row_text};
 use crate::turso_params::{integer_param, new_query_params, text_param};
 use crate::{Error, Result};
 use memo::note::NoteDto;
+use memo::utils::{IdPrefix, generate_prefixed_id};
 
 const LATEST_REVISION: &'static str = "latest";
 
@@ -23,7 +24,8 @@ impl FromTursoRow for NoteDto {
             file_id: row_text(row, 1)?,
             content: row_text(row, 2)?,
             next_revision: row_text(row, 3)?,
-            created_at: row_integer(row, 4)?,
+            checksum: row_text(row, 4)?,
+            created_at: row_integer(row, 5)?,
         })
     }
 }
@@ -38,11 +40,15 @@ impl NoteRepo {
     }
 
     pub async fn create_revision(&self, file_id: String, content: String) -> Result<NoteDto> {
+        let hash = Sha256::digest(content.as_bytes());
+        let hash_str = format!("{:x}", hash);
+
         let note = NoteDto {
             id: generate_prefixed_id(IdPrefix::Note),
             file_id,
             content,
             next_revision: LATEST_REVISION.to_string(),
+            checksum: hash_str,
             created_at: chrono::Utc::now().timestamp(),
         };
 

@@ -3,6 +3,7 @@ CREATE TABLE notes (
     file_id TEXT NOT NULL,
     content TEXT NOT NULL,
     next_revision TEXT NOT NULL,
+    checksum TEXT NOT NULL,
     created_at INTEGER NOT NULL,
     FOREIGN KEY (file_id) REFERENCES files(id)
 ) STRICT;
