@@ -6,9 +6,7 @@ use exif::{In, Tag};
 use image::DynamicImage;
 use image::ImageReader;
 use image::imageops;
-use memo::file::FileType;
 use snafu::ResultExt;
-use storage::DownloadedFile;
 use tracing::error;
 
 use crate::error::DbSnafu;
@@ -22,6 +20,7 @@ use db::file::MAX_FILES;
 use memo::dir::DirDto;
 use memo::dir::DirMeta;
 use memo::dir::DirType;
+use memo::file::FileType;
 use memo::file::MAX_FILE_SIZE;
 use memo::file::RemoteUploadDto;
 use memo::file::SignedFileUploadDto;
@@ -33,6 +32,7 @@ use memo::utils::IdPrefix;
 use memo::utils::generate_prefixed_id;
 use memo::utils::slugify_prefixed;
 use memo::utils::truncate_string;
+use storage::DownloadedFile;
 
 #[derive(Debug, Clone)]
 pub struct PhotoExif {
@@ -271,6 +271,31 @@ pub async fn create_file_svc(
             Err(e)
         }
     }
+}
+
+pub async fn delete_file_svc(state: AppState, dir_meta: &DirMeta, file: &FileDto) -> Result<()> {
+    // Delete record
+    state.db.files.delete(&file.id).await.context(DbSnafu)?;
+    state.file_cache.remove(&file.id);
+
+    if file.file_type == FileType::Note {
+        // Also delete all note revisions
+        state
+            .db
+            .notes
+            .delete_revisions(&file.id)
+            .await
+            .context(DbSnafu)?;
+    } else {
+        // Delete file(s) from storage
+        let storage_client = state.storage_client.clone();
+        storage_client
+            .delete(&dir_meta, &file)
+            .await
+            .context(StorageSnafu)?;
+    }
+
+    Ok(())
 }
 
 /// Creates a file record relying completely from upload metadata

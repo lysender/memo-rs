@@ -2,7 +2,6 @@ use std::cmp::min;
 use std::sync::Arc;
 use std::time::Duration;
 
-use sha2::{Digest, Sha256};
 use snafu::ResultExt;
 use tokio::time::sleep;
 use turso::Row;
@@ -13,7 +12,7 @@ use crate::turso_decode::{FromTursoRow, collect_row, row_integer, row_text};
 use crate::turso_params::{integer_param, new_query_params, text_param};
 use crate::{Error, Result};
 use memo::note::NoteDto;
-use memo::utils::{IdPrefix, generate_prefixed_id};
+use memo::utils::{IdPrefix, generate_prefixed_id, str_checksum};
 
 const LATEST_REVISION: &'static str = "latest";
 
@@ -40,15 +39,14 @@ impl NoteRepo {
     }
 
     pub async fn create_revision(&self, file_id: String, content: String) -> Result<NoteDto> {
-        let hash = Sha256::digest(content.as_bytes());
-        let hash_str = format!("{:x}", hash.as_slice());
+        let checksum = str_checksum(&content);
 
         let note = NoteDto {
             id: generate_prefixed_id(IdPrefix::Note),
             file_id,
             content,
             next_revision: LATEST_REVISION.to_string(),
-            checksum: hash_str,
+            checksum: checksum.clone(),
             created_at: chrono::Utc::now().timestamp(),
         };
 
@@ -65,6 +63,7 @@ impl NoteRepo {
                 file_id,
                 content,
                 next_revision,
+                checksum,
                 created_at
             )
             VALUES
@@ -73,6 +72,7 @@ impl NoteRepo {
                 :file_id,
                 :content,
                 :next_revision,
+                :checksum,
                 :created_at
             )
         "#;
@@ -87,6 +87,7 @@ impl NoteRepo {
         insert_params.push(text_param(":file_id", note.file_id.clone()));
         insert_params.push(text_param(":content", note.content.clone()));
         insert_params.push(text_param(":next_revision", LATEST_REVISION.to_string()));
+        insert_params.push(text_param(":checksum", checksum));
         insert_params.push(integer_param(":created_at", note.created_at));
 
         let conn = self.db_pool.acquire().await?;
@@ -172,6 +173,7 @@ impl NoteRepo {
                 file_id,
                 content,
                 next_revision,
+                checksum,
                 created_at
             FROM notes
             WHERE file_id = :file_id AND next_revision = :next_revision
@@ -190,24 +192,20 @@ impl NoteRepo {
         let dto: Option<NoteDto> = collect_row(row_result)?;
         Ok(dto)
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use std::path::PathBuf;
+    pub async fn delete_revisions(&self, file_id: &str) -> Result<()> {
+        let query = r#"
+            DELETE FROM notes
+            WHERE file_id = :file_id
+        "#;
 
-    use super::*;
+        let mut q_params = new_query_params();
+        q_params.push(text_param(":file_id", file_id.to_owned()));
 
-    fn temp_db_path() -> PathBuf {
-        std::env::temp_dir().join(format!(
-            "memo-note-revision-{}.db",
-            generate_prefixed_id(IdPrefix::Any)
-        ))
-    }
+        let conn = self.db_pool.acquire().await?;
+        let mut stmt = conn.prepare(query).await.context(DbPrepareSnafu)?;
+        stmt.execute(q_params).await.context(DbStatementSnafu)?;
 
-    fn cleanup_db_files(path: &std::path::Path) {
-        for suffix in ["", "-wal", "-shm", "-log"] {
-            let _ = std::fs::remove_file(format!("{}{suffix}", path.display()));
-        }
+        Ok(())
     }
 }

@@ -1,9 +1,9 @@
-use snafu::{ResultExt, ensure};
+use snafu::{OptionExt, ResultExt, ensure};
 use validator::Validate;
 
 use crate::{
     Result,
-    error::{DbSnafu, ValidationSnafu},
+    error::{DbSnafu, NotFoundSnafu, ValidationSnafu},
     state::AppState,
 };
 use db::file::MAX_FILES;
@@ -11,7 +11,7 @@ use memo::{
     dir::DirDto,
     file::{FileDto, FileType},
     note::{CreateNoteDto, NoteDto},
-    utils::{IdPrefix, generate_prefixed_id, truncate_string},
+    utils::{IdPrefix, generate_prefixed_id, str_checksum, truncate_string},
     validators::flatten_errors,
 };
 
@@ -105,6 +105,19 @@ pub async fn update_note_svc(
     file_id: String,
     content: String,
 ) -> Result<NoteDto> {
+    // Ensure the same content is not being saved again.
+    let note = state.db.notes.get_note(&file_id).await.context(DbSnafu)?;
+    let note = note.context(NotFoundSnafu {
+        msg: "Note not found".to_string(),
+    })?;
+
+    let checksum = str_checksum(&content);
+    if note.checksum == checksum {
+        // Return the existing note without creating a new revision
+        return Ok(note);
+    }
+
+    // Otherwise, create a new revision
     state
         .db
         .notes

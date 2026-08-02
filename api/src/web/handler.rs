@@ -10,13 +10,12 @@ use serde::Serialize;
 use snafu::{OptionExt, ResultExt, ensure};
 
 use crate::{
-    Error,
     dir::{create_dir_svc, delete_dir_svc, update_dir_svc},
     error::{
         DbSnafu, ErrorResponse, ForbiddenSnafu, JsonRejectionSnafu, NotFoundSnafu, Result,
         StorageSnafu, WhateverSnafu,
     },
-    file::{create_file_svc, create_remote_file_svc, generate_upload_url_svc},
+    file::{create_file_svc, create_remote_file_svc, delete_file_svc, generate_upload_url_svc},
     health::{check_liveness, check_readiness},
     note::{create_note_svc, get_note_svc, update_note_svc},
     state::AppState,
@@ -28,7 +27,7 @@ use db::file::ListFilesParams;
 use memo::{
     dir::{DirDto, DirMeta, DirType},
     file::{FileDto, ORIGINAL_PATH, RemoteUploadDto, SignedRemoteUploadDto},
-    note::{CreateNoteDto, UpdateNoteDto},
+    note::{CreateNoteDto, NoteContentDto, UpdateNoteDto},
     pagination::Paginated,
 };
 use yaas::{actor::Actor, role::Permission};
@@ -365,14 +364,19 @@ pub async fn get_file_handler(
         dir_name: dir.name.clone(),
     };
 
-    let storage_client = state.storage_client.clone();
-    // Extract dir from the middleware extension
-    let file_dto = storage_client
-        .attach_url(&dir_meta, file)
-        .await
-        .context(StorageSnafu)?;
+    match dir.dir_type {
+        DirType::Notes => Ok(JsonResponse::new(serde_json::to_string(&file).unwrap())),
+        _ => {
+            let storage_client = state.storage_client.clone();
+            // Extract dir from the middleware extension
+            let file_dto = storage_client
+                .attach_url(&dir_meta, file)
+                .await
+                .context(StorageSnafu)?;
 
-    Ok(JsonResponse::new(serde_json::to_string(&file_dto).unwrap()))
+            Ok(JsonResponse::new(serde_json::to_string(&file_dto).unwrap()))
+        }
+    }
 }
 
 pub async fn delete_file_handler(
@@ -397,16 +401,7 @@ pub async fn delete_file_handler(
         dir_name: dir.name.clone(),
     };
 
-    // Delete record
-    state.db.files.delete(&file.id).await.context(DbSnafu)?;
-    state.file_cache.remove(&file.id);
-
-    // Delete file(s) from storage
-    let storage_client = state.storage_client.clone();
-    storage_client
-        .delete(&dir_meta, &file)
-        .await
-        .context(StorageSnafu)?;
+    delete_file_svc(state, &dir_meta, &file).await?;
 
     Ok(JsonResponse::with_status(
         StatusCode::NO_CONTENT,
@@ -486,7 +481,11 @@ pub async fn get_note_handler(
         msg: "Note not found",
     })?;
 
-    Ok(JsonResponse::new(serde_json::to_string(&note).unwrap()))
+    let note_content: NoteContentDto = note.into();
+
+    Ok(JsonResponse::new(
+        serde_json::to_string(&note_content).unwrap(),
+    ))
 }
 
 pub async fn update_note_handler(
@@ -513,45 +512,9 @@ pub async fn update_note_handler(
     })?;
 
     let updated = update_note_svc(&state, file.id.clone(), data.content.clone()).await?;
+    let note_content: NoteContentDto = updated.into();
 
-    Ok(JsonResponse::new(serde_json::to_string(&updated).unwrap()))
-}
-
-pub async fn delete_note_handler(
-    State(state): State<AppState>,
-    Extension(actor): Extension<Actor>,
-    Extension(dir): Extension<DirDto>,
-    Extension(file): Extension<FileDto>,
-) -> Result<JsonResponse> {
-    let permissions = vec![Permission::FilesDelete];
-    ensure!(
-        actor.has_permissions(&permissions),
-        ForbiddenSnafu {
-            msg: "Insufficient permissions"
-        }
-    );
-
-    let actor = actor.actor.expect("Actor must be present");
-    let dir_meta = DirMeta {
-        bucket_name: state.config.cloud.bucket.clone(),
-        org_id: actor.org_id,
-        dir_type: dir.dir_type.clone(),
-        dir_name: dir.name.clone(),
-    };
-
-    // Delete record
-    state.db.files.delete(&file.id).await.context(DbSnafu)?;
-    state.file_cache.remove(&file.id);
-
-    // Delete file(s) from storage
-    let storage_client = state.storage_client.clone();
-    storage_client
-        .delete(&dir_meta, &file)
-        .await
-        .context(StorageSnafu)?;
-
-    Ok(JsonResponse::with_status(
-        StatusCode::NO_CONTENT,
-        "".to_string(),
+    Ok(JsonResponse::new(
+        serde_json::to_string(&note_content).unwrap(),
     ))
 }
