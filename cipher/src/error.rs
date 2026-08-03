@@ -1,4 +1,4 @@
-use snafu::{Backtrace, Snafu};
+use snafu::Snafu;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -9,10 +9,10 @@ pub enum Error {
     Cipher { msg: String },
 
     #[snafu(display("Decode error: {}", source))]
-    Decode {
-        source: base64::DecodeError,
-        backtrace: Backtrace,
-    },
+    Decode { source: base64::DecodeError },
+
+    #[snafu(display("ChaCha20Poly1305 error: {}", source))]
+    ChaCha { source: chacha20poly1305::Error },
 
     #[snafu(display("{}", msg))]
     Whatever { msg: String },
